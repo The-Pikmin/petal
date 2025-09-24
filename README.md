@@ -4,8 +4,8 @@
 </div>
 
 ```
-[!NOTE]
-This is the frontend application for the senior design project, "A07 - Computer Vision System for Plant Disease Diagnosis".
+[!NOTE] This is the backend application for the senior design project:
+"A07 - Computer Vision System for Plant Disease Diagnosis".
 ```
 
 # Introduction
