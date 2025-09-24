@@ -1,5 +1,5 @@
 <div align="center">
-<img width="125" height="125" src="https://emojicdn.elk.sh/🌱?style=twitter"/>
+<img width="125" height="125" src="https://emojicdn.elk.sh/🌸?style=apple"/>
 <h1>Petal - Plant Disease Diagnosis Frontend</h1>
 </div>
 
