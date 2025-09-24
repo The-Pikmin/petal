@@ -1,44 +1,75 @@
-# Next.js + Jest
+<div align="center">
+<img width="125" height="125" src="https://emojicdn.elk.sh/🌱?style=twitter"/>
+<h1>Petal - Plant Disease Diagnosis Frontend</h1>
+</div>
 
-This example shows how to configure Jest to work with Next.js.
-
-This includes Next.js' built-in support for Global CSS, CSS Modules and TypeScript. This example also shows how to use Jest with the App Router and React Server Components.
-
-> **Note:** Since tests can be co-located alongside other files inside the App Router, we have placed those tests in `app/` to demonstrate this behavior (which is different than `pages/`). You can still place all tests in `__tests__` if you prefer.
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/next.js/tree/canary/examples/with-jest&project-name=with-jest&repository-name=with-jest)
-
-## How to Use
-
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init), [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/), or [pnpm](https://pnpm.io) to bootstrap the example:
-
-```bash
-npx create-next-app --example with-jest with-jest-app
+```
+[!NOTE]
+This is the frontend application for the senior design project, "A07 - Computer Vision System for Plant Disease Diagnosis".
 ```
 
-```bash
-yarn create next-app --example with-jest with-jest-app
+# Introduction
+
+Welcome to the frontend for the Plant Disease Diagnosis application! This is a Next.js application built with TypeScript and tested with Jest. It provides the user interface for users to upload images of their plants and receive a diagnosis from our machine learning model.
+
+# Getting Started
+
+Follow these steps to get the development environment up and running on your local machine.
+
+1. Clone the repository:
+
 ```
 
-```bash
-pnpm create next-app --example with-jest with-jest-app
+git clone <your-repository-url>
+
 ```
 
-## Running Tests
+2. Navigate to the directory:
 
-```bash
-npm test
 ```
 
-```bash
-yarn test
+cd <repository-name>
+
 ```
 
-```bash
+3. Install dependencies: This project uses pnpm as its package manager.
+
+```
+
+pnpm install
+
+```
+
+<!-- 4. Set up environment variables: Copy the example environment file and fill in the required variables.
+
+cp .env.example .env.local
+
+You'll need to set NEXT_PUBLIC_API_BASE_URL to point to your running backend server (e.g., http://127.0.0.1:5000). -->
+
+# Running the Development Server
+
+To run the application locally, use the following command:
+
+```
+
+pnpm dev
+
+```
+
+Open http://localhost:3000 with your browser to see the result.
+
+# Running Tests
+
+To run the unit tests for this project, use the command:
+
+```
+
 pnpm test
+
 ```
 
-Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
-# petal
+For interactive watch mode during development, run `pnpm test:watch`.
+
+# Contributing
+
+We welcome contributions from the team! If you would like to contribute to this repository, please read our [Contributing Guide](./CONTRIBUTING.md) for our full workflow and standards.

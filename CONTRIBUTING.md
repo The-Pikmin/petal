@@ -2,7 +2,7 @@
 
 Welcome, and thank you for considering contributing to the Plant Diagnosis Frontend! Your help is greatly appreciated. Before you begin, please read through this document to understand our development process and guidelines.
 
-# 📦 Setup
+# Setup
 
 1. Install [Node.js LTS](https://nodejs.org/en/download/) (v20 or higher).
 
@@ -22,7 +22,7 @@ cp .env.example .env.local
 
 <!-- You will need to set the NEXT_PUBLIC_API_BASE_URL variable in this file to point to the backend server's address (e.g., http://127.0.0.1:5000). -->
 
-# 🏗️ Development
+# Development
 
 To start the local development server, run the following command. This will launch the application on http://localhost:3000.
 
@@ -32,7 +32,7 @@ pnpm run dev
 
 The application will automatically reload when you save your changes.
 
-# ✅ Testing Your Changes
+# Testing Your Changes
 
 In your pull request, it's important to provide a thorough plan for how you tested your changes.
 
@@ -63,7 +63,7 @@ After a final review, the pull request is merged.
 
 A new version tag (e.g., `v1.1.0`) is created on the `main` branch to mark the release.
 
-# 🔎 Before Submitting a Pull Request
+# Before Submitting a Pull Request
 
 Please ensure your code keeps our CI checks green! Run these commands locally to verify everything is correct before you push.
 
