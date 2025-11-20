@@ -1,0 +1,281 @@
+<script lang="ts">
+    import { onMount } from "svelte";
+    import BottomNav from "$lib/components/BottomNav.svelte";
+    import { theme } from "$lib/stores/theme.store";
+    import { mockUserProfile } from "$lib/services/mock-data";
+    import type { UserProfile } from "$lib/types";
+    import {
+        User,
+        Mail,
+        Calendar,
+        Camera,
+        Leaf,
+        AlertCircle,
+        Bell,
+        Globe,
+        Shield,
+        HelpCircle,
+        Info,
+        LogOut,
+        ChevronRight,
+        Sun,
+        Moon,
+        Edit,
+    } from "lucide-svelte";
+
+    let mounted = $state(false);
+    let userProfile = $state<UserProfile>(mockUserProfile);
+
+    onMount(() => {
+        mounted = true;
+    });
+
+    function formatJoinDate(timestamp: number): string {
+        return new Date(timestamp).toLocaleDateString("en-US", {
+            month: "long",
+            year: "numeric",
+        });
+    }
+
+    const settingsSections = [
+        {
+            title: "Account",
+            items: [
+                { icon: User, label: "Edit Profile", action: () => {} },
+                { icon: Mail, label: "Email & Password", action: () => {} },
+            ],
+        },
+        {
+            title: "Preferences",
+            items: [
+                {
+                    icon: Bell,
+                    label: "Notifications",
+                    subtitle: userProfile.settings.notifications.enabled
+                        ? "Enabled"
+                        : "Disabled",
+                    action: () => {},
+                },
+                {
+                    icon: Globe,
+                    label: "Language",
+                    subtitle: "English",
+                    action: () => {},
+                },
+            ],
+        },
+        {
+            title: "Privacy & Security",
+            items: [
+                { icon: Shield, label: "Data & Privacy", action: () => {} },
+                { icon: Shield, label: "Terms of Service", action: () => {} },
+            ],
+        },
+        {
+            title: "Support",
+            items: [
+                { icon: HelpCircle, label: "Help & FAQs", action: () => {} },
+                { icon: Info, label: "About GreenEye", action: () => {} },
+            ],
+        },
+    ];
+</script>
+
+<svelte:head>
+    <title>Profile - GreenEye</title>
+</svelte:head>
+
+<div class="min-h-screen pb-20 bg-secondary/30">
+    <!-- Header -->
+    <header class="px-6 py-6 bg-background">
+        <h1 class="text-2xl font-bold text-foreground">Profile</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="px-6 py-6 space-y-6">
+        <!-- Profile Card -->
+        <div
+            class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+        >
+            <div class="flex items-center gap-4 mb-4">
+                <!-- Avatar -->
+                <div
+                    class="w-20 h-20 rounded-full flex items-center justify-center bg-primary text-primary-foreground"
+                >
+                    <User size={32} />
+                </div>
+
+                <!-- User Info -->
+                <div class="flex-1">
+                    <h2 class="text-xl font-bold text-foreground mb-1">
+                        {userProfile.name}
+                    </h2>
+                    <p class="text-sm text-muted-foreground mb-1">
+                        {userProfile.email}
+                    </p>
+                    <p
+                        class="text-xs text-muted-foreground flex items-center gap-1"
+                    >
+                        <Calendar size={12} />
+                        Joined {formatJoinDate(userProfile.joinedDate)}
+                    </p>
+                </div>
+
+                <!-- Edit Button -->
+                <button
+                    class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
+                    aria-label="Edit profile"
+                >
+                    <Edit size={18} />
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-3 gap-3">
+            <!-- Total Scans -->
+            <div
+                class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border"
+            >
+                <div
+                    class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center bg-primary/10 text-primary"
+                >
+                    <Camera size={20} />
+                </div>
+                <p class="text-2xl font-bold text-foreground mb-1">
+                    {userProfile.stats.totalScans}
+                </p>
+                <p class="text-xs text-muted-foreground">Scans</p>
+            </div>
+
+            <!-- Plants Saved -->
+            <div
+                class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border"
+            >
+                <div
+                    class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center bg-green-500/10 text-green-600 dark:text-green-400"
+                >
+                    <Leaf size={20} />
+                </div>
+                <p class="text-2xl font-bold text-foreground mb-1">
+                    {userProfile.stats.plantsSaved}
+                </p>
+                <p class="text-xs text-muted-foreground">Plants</p>
+            </div>
+
+            <!-- Diseases Identified -->
+            <div
+                class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border"
+            >
+                <div
+                    class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center bg-orange-500/10 text-orange-600 dark:text-orange-400"
+                >
+                    <AlertCircle size={20} />
+                </div>
+                <p class="text-2xl font-bold text-foreground mb-1">
+                    {userProfile.stats.diseasesIdentified}
+                </p>
+                <p class="text-xs text-muted-foreground">Diseases</p>
+            </div>
+        </div>
+
+        <!-- Theme Toggle Card -->
+        <div
+            class="rounded-3xl p-4 bg-card text-card-foreground shadow-sm border border-border"
+        >
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-full flex items-center justify-center bg-muted"
+                    >
+                        {#if $theme === "light"}
+                            <Sun size={20} />
+                        {:else}
+                            <Moon size={20} />
+                        {/if}
+                    </div>
+                    <div>
+                        <p class="font-medium text-foreground">Theme</p>
+                        <p class="text-sm text-muted-foreground">
+                            {$theme === "light" ? "Light" : "Dark"} mode
+                        </p>
+                    </div>
+                </div>
+                <button
+                    onclick={() => theme.toggle()}
+                    class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                    Switch to {$theme === "light" ? "Dark" : "Light"}
+                </button>
+            </div>
+        </div>
+
+        <!-- Settings Sections -->
+        {#each settingsSections as section}
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold text-muted-foreground px-2">
+                    {section.title}
+                </h3>
+                <div
+                    class="rounded-3xl overflow-hidden bg-card text-card-foreground shadow-sm border border-border"
+                >
+                    {#each section.items as item, index}
+                        <button
+                            onclick={item.action}
+                            class="w-full px-4 py-4 flex items-center gap-3 transition-colors hover:bg-muted"
+                            class:border-t={index > 0}
+                            class:border-border={index > 0}
+                        >
+                            <div
+                                class="w-10 h-10 rounded-full flex items-center justify-center bg-muted flex-shrink-0"
+                            >
+                                <item.icon size={20} />
+                            </div>
+                            <div class="flex-1 text-left">
+                                <p class="font-medium text-foreground">
+                                    {item.label}
+                                </p>
+                                {#if item.subtitle}
+                                    <p class="text-sm text-muted-foreground">
+                                        {item.subtitle}
+                                    </p>
+                                {/if}
+                            </div>
+                            <ChevronRight
+                                size={20}
+                                class="text-muted-foreground"
+                            />
+                        </button>
+                    {/each}
+                </div>
+            </div>
+        {/each}
+
+        <!-- Sign Out Button -->
+        <div class="pt-4">
+            <button
+                class="w-full px-6 py-4 rounded-3xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-destructive text-white flex items-center justify-center gap-2"
+            >
+                <LogOut size={20} />
+                Sign Out
+            </button>
+        </div>
+
+        <!-- App Version -->
+        <div class="text-center pb-4">
+            <p class="text-xs text-muted-foreground">GreenEye v1.0.0</p>
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <BottomNav />
+</div>
+
+<style>
+    /* Smooth transitions */
+    button {
+        transition:
+            transform 0.2s ease,
+            background-color 0.3s ease;
+    }
+</style>
