@@ -32,6 +32,11 @@ function createThemeStore() {
             if (browser) {
                 localStorage.setItem('theme', newTheme);
                 document.documentElement.setAttribute('data-theme', newTheme);
+                if (newTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
             }
         },
         setTheme: (theme: Theme) => {
@@ -40,6 +45,11 @@ function createThemeStore() {
             if (browser) {
                 localStorage.setItem('theme', theme);
                 document.documentElement.setAttribute('data-theme', theme);
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
             }
         }
     };
@@ -51,4 +61,9 @@ export const theme = createThemeStore();
 if (browser) {
     const initialTheme = getInitialTheme();
     document.documentElement.setAttribute('data-theme', initialTheme);
+    if (initialTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
 }

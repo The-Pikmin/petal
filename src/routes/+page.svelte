@@ -7,6 +7,17 @@
         type WeatherData,
     } from "$lib/services/weather.service";
     import BottomNav from "$lib/components/BottomNav.svelte";
+    import {
+        Bell,
+        Search,
+        Sun,
+        Moon,
+        Leaf,
+        Cloud,
+        CloudRain,
+        CloudSun,
+        Snowflake,
+    } from "lucide-svelte";
 
     let mounted = $state(false);
     let weather = $state<WeatherData | null>(null);
@@ -55,61 +66,56 @@
     function handleScanPlant() {
         goto("/camera");
     }
+
+    function getWeatherIcon(condition: string) {
+        if (condition.includes("Rain") || condition.includes("Drizzle"))
+            return CloudRain;
+        if (condition.includes("Snow")) return Snowflake;
+        if (condition.includes("Cloud")) return Cloud;
+        if (condition.includes("Partly")) return CloudSun;
+        return Sun;
+    }
 </script>
 
 <svelte:head>
     <title>Home - GreenEye</title>
 </svelte:head>
 
-<div
-    class="min-h-screen pb-20"
-    style="background-color: var(--color-bg-secondary);"
->
+<div class="min-h-screen pb-20 bg-secondary/30">
     <!-- Header -->
-    <header
-        class="px-6 py-4"
-        style="background-color: var(--color-bg-primary);"
-    >
+    <header class="px-6 py-4 bg-background">
         <div class="flex items-center justify-between mb-4">
             <!-- Profile Icon -->
             <div
-                class="w-10 h-10 rounded-full flex items-center justify-center"
-                style="background-color: var(--color-primary);"
+                class="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-primary-foreground"
             >
-                <span class="text-white text-xl">🌿</span>
+                <Leaf size={20} />
             </div>
 
             <!-- Greeting -->
             <div class="flex-1 px-4">
-                <p class="text-sm" style="color: var(--color-text-secondary);">
-                    Good morning
-                </p>
-                <p
-                    class="font-semibold"
-                    style="color: var(--color-text-primary);"
-                >
-                    Gardener
-                </p>
+                <p class="text-sm text-muted-foreground">Good morning</p>
+                <p class="font-semibold text-foreground">Gardener</p>
             </div>
 
             <!-- Theme Toggle & Notifications -->
             <div class="flex items-center gap-2">
                 <button
                     onclick={() => theme.toggle()}
-                    class="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                    style="background-color: var(--color-bg-tertiary);"
+                    class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
                     aria-label="Toggle theme"
                 >
-                    <span class="text-xl"
-                        >{$theme === "light" ? "🌙" : "☀️"}</span
-                    >
+                    {#if $theme === "light"}
+                        <Moon size={20} />
+                    {:else}
+                        <Sun size={20} />
+                    {/if}
                 </button>
                 <button
-                    class="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                    style="background-color: var(--color-bg-tertiary);"
+                    class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
                     aria-label="Notifications"
                 >
-                    <span class="text-xl">🔔</span>
+                    <Bell size={20} />
                 </button>
             </div>
         </div>
@@ -119,14 +125,12 @@
             <input
                 type="text"
                 placeholder="Search plant diseases..."
-                class="w-full px-4 py-3 pr-12 rounded-2xl border transition-colors"
-                style="background-color: var(--color-bg-secondary); border-color: var(--color-border); color: var(--color-text-primary);"
+                class="w-full px-4 py-3 pr-12 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
             <button
-                class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center"
-                style="background-color: var(--color-primary);"
+                class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground"
             >
-                <span class="text-white">🔍</span>
+                <Search size={16} />
             </button>
         </div>
     </header>
@@ -136,36 +140,30 @@
         <!-- Weather Card -->
         {#if weather}
             <div
-                class="rounded-3xl p-6 transition-all"
-                style="background-color: var(--color-bg-primary); box-shadow: var(--shadow-md);"
+                class="rounded-3xl p-6 transition-all bg-card text-card-foreground shadow-sm border border-border"
             >
                 <div class="flex items-center justify-between">
                     <div>
-                        <p
-                            class="text-4xl font-bold mb-1"
-                            style="color: var(--color-text-primary);"
-                        >
+                        <p class="text-4xl font-bold mb-1">
                             {weather.temperature}°C
                         </p>
-                        <p
-                            class="text-sm"
-                            style="color: var(--color-text-secondary);"
-                        >
+                        <p class="text-sm text-muted-foreground">
                             {weather.location}
                         </p>
                     </div>
-                    <div class="text-6xl">{weather.icon}</div>
+                    <div class="text-primary">
+                        {#if weather}
+                            {@const Icon = getWeatherIcon(weather.condition)}
+                            <Icon size={48} />
+                        {/if}
+                    </div>
                 </div>
                 <div class="mt-4 flex items-center justify-between">
-                    <span
-                        class="text-sm font-medium"
-                        style="color: var(--color-text-secondary);"
-                    >
+                    <span class="text-sm font-medium text-muted-foreground">
                         {weather.condition}
                     </span>
                     <button
-                        class="px-4 py-2 rounded-full text-sm font-medium transition-colors"
-                        style="background-color: var(--color-bg-tertiary); color: var(--color-text-primary);"
+                        class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-secondary text-secondary-foreground hover:bg-secondary/80"
                     >
                         Hourly
                     </button>
@@ -175,8 +173,7 @@
 
         <!-- Main CTA Card - Check your plant -->
         <div
-            class="rounded-3xl p-6 transition-all"
-            style="background-color: var(--color-bg-primary); box-shadow: var(--shadow-md);"
+            class="rounded-3xl p-6 transition-all bg-card text-card-foreground shadow-sm border border-border"
         >
             <div class="flex flex-col items-center text-center">
                 <!-- Plant Illustration -->
@@ -189,16 +186,8 @@
                 </div>
 
                 <!-- Text -->
-                <h2
-                    class="text-2xl font-bold mb-2"
-                    style="color: var(--color-text-primary);"
-                >
-                    Check your plant
-                </h2>
-                <p
-                    class="text-sm mb-6"
-                    style="color: var(--color-text-secondary);"
-                >
+                <h2 class="text-2xl font-bold mb-2">Check your plant</h2>
+                <p class="text-sm mb-6 text-muted-foreground">
                     Take a photo or upload an image to get
                     <br />
                     instant disease diagnosis and care tips
@@ -207,8 +196,7 @@
                 <!-- CTA Button -->
                 <button
                     onclick={handleScanPlant}
-                    class="px-8 py-3 rounded-full font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95"
-                    style="background-color: var(--color-primary); box-shadow: var(--shadow-md);"
+                    class="px-8 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                     Get Started
                 </button>
@@ -217,23 +205,16 @@
 
         <!-- Plant Grid Section -->
         <div>
-            <h3
-                class="text-lg font-bold mb-4"
-                style="color: var(--color-text-primary);"
-            >
-                Explore
-            </h3>
+            <h3 class="text-lg font-bold mb-4 text-foreground">Explore</h3>
             <div class="grid grid-cols-2 gap-4">
                 {#each plantCards as card}
                     <button
-                        class="rounded-3xl p-4 text-left transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden"
-                        style="background-color: var(--color-bg-primary); box-shadow: var(--shadow-md);"
+                        class="rounded-3xl p-4 text-left transition-all duration-300 hover:scale-105 active:scale-95 relative overflow-hidden bg-card text-card-foreground shadow-sm border border-border"
                         disabled={card.comingSoon}
                     >
                         {#if card.comingSoon}
                             <div
-                                class="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium"
-                                style="background-color: var(--color-primary); color: white;"
+                                class="absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground"
                             >
                                 Soon
                             </div>
@@ -241,8 +222,7 @@
 
                         <!-- Plant Image -->
                         <div
-                            class="w-full aspect-square mb-3 rounded-2xl overflow-hidden"
-                            style="background-color: var(--color-bg-secondary);"
+                            class="w-full aspect-square mb-3 rounded-2xl overflow-hidden bg-muted"
                         >
                             <img
                                 src={card.image}
@@ -252,16 +232,10 @@
                         </div>
 
                         <!-- Text -->
-                        <h4
-                            class="font-semibold mb-1"
-                            style="color: var(--color-text-primary);"
-                        >
+                        <h4 class="font-semibold mb-1">
                             {card.title}
                         </h4>
-                        <p
-                            class="text-xs"
-                            style="color: var(--color-text-secondary);"
-                        >
+                        <p class="text-xs text-muted-foreground">
                             {card.subtitle}
                         </p>
                     </button>
