@@ -142,3 +142,26 @@ export interface UserSettings {
 		analyticsEnabled: boolean;
 	};
 }
+
+/**
+ * Represents a user's saved plant
+ */
+export interface Plant {
+	id: string;
+	name: string;
+	species: string;
+	image: string;
+	healthStatus: "healthy" | "needs-water" | "warning" | "sick";
+	lastWatered?: number;
+	nextWatering?: number;
+}
+
+/**
+ * Represents a gardening tip
+ */
+export interface Tip {
+	id: string;
+	title: string;
+	content: string;
+	category: "care" | "pest" | "general";
+}
