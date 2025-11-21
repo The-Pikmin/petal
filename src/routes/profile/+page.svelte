@@ -78,7 +78,7 @@
 <div class="min-h-screen pb-20 bg-secondary/30">
 	<!-- Header -->
 	<header
-		class="px-6 py-6 bg-background fixed top-0 left-0 right-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
+		class="px-6 py-6 bg-background sticky top-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
 	>
 		<div class="container-responsive">
 			<div class="flex items-center justify-between">
@@ -89,7 +89,7 @@
 	</header>
 
 	<!-- Main Content -->
-	<main class="px-6 py-6 space-y-6 pt-24">
+	<main class="px-6 py-6 space-y-6">
 		<div class="container-responsive desktop-sidebar-layout space-y-6 lg:space-y-0">
 			<!-- Left Column (Desktop) -->
 			<div class="space-y-6 lg:col-start-1 lg:row-start-1 lg:h-fit lg:sticky lg:top-28">

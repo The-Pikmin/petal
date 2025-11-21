@@ -6,6 +6,13 @@
 
 :root {
 	--radius: 0.625rem;
+
+	/* Header heights - responsive and tied to actual header sizes */
+	--header-simple-height: 4.5rem;
+	/* For scan page (simpler header) */
+	--header-standard-height: 6rem;
+	/* For profile/history/library */
+
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.129 0.042 264.695);
 	--card: oklch(1 0 0);

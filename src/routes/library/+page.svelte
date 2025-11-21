@@ -83,46 +83,35 @@
 <div class="min-h-screen pb-20 bg-secondary/30">
 	<!-- Header -->
 	<header
-		class="px-6 py-6 bg-background fixed top-0 left-0 right-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
+		class="px-6 py-6 bg-background sticky top-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
 	>
 		<div class="container-responsive">
 			<div class="flex items-center justify-between mb-6">
 				<div>
-					<h1 class="text-2xl font-bold text-foreground mb-1">Plant Disease Library</h1>
-					<p class="text-sm text-muted-foreground">
-						Browse and learn about common plant diseases
-					</p>
+					<h1 class="text-2xl font-bold text-foreground mb-1">Plant Library</h1>
+					<p class="text-sm text-muted-foreground">Explore common plant diseases</p>
 				</div>
-				<HamburgerMenu />
-			</div>
-
-			<!-- Search Bar -->
-			<div class="relative mb-4">
-				<input
-					type="text"
-					bind:value={searchQuery}
-					placeholder="Search diseases..."
-					class="w-full px-4 py-3 pr-12 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-				/>
-				<div
-					class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground"
-				>
-					<Search size={18} />
+				<div class="flex items-center gap-2">
+					<button
+						class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
+						aria-label="Search"
+					>
+						<Search size={20} />
+					</button>
+					<HamburgerMenu />
 				</div>
 			</div>
 
-			<!-- Category Filter Tabs -->
-			<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+			<!-- Categories -->
+			<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
 				{#each categories as category}
 					<button
 						onclick={() => (selectedCategory = category.id)}
-						class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2"
-						class:bg-primary={selectedCategory === category.id}
-						class:text-primary-foreground={selectedCategory === category.id}
-						class:bg-muted={selectedCategory !== category.id}
-						class:text-muted-foreground={selectedCategory !== category.id}
+						class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {selectedCategory ===
+						category.id
+							? 'bg-primary text-primary-foreground'
+							: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
 					>
-						<category.icon size={16} />
 						{category.label}
 					</button>
 				{/each}
@@ -131,7 +120,7 @@
 	</header>
 
 	<!-- Main Content -->
-	<main class="px-6 py-4 pt-80 pb-28">
+	<main class="px-6 py-4 pb-28">
 		<div class="container-responsive">
 			<!-- Results Count -->
 			<p class="text-sm text-muted-foreground mb-4">

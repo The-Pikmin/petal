@@ -83,7 +83,7 @@
 <div class="min-h-screen pb-20 bg-secondary/30">
 	<!-- Header -->
 	<header
-		class="px-6 py-6 bg-background fixed top-0 left-0 right-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
+		class="px-6 py-6 bg-background sticky top-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
 	>
 		<div class="container-responsive">
 			<div class="flex items-center justify-between mb-4">
@@ -107,7 +107,7 @@
 	</header>
 
 	<!-- Main Content -->
-	<main class="px-6 py-4 pt-32">
+	<main class="px-6 py-4">
 		<div class="container-responsive">
 			{#if scanHistory.length > 0}
 				<!-- Scan Timeline -->

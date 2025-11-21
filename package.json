@@ -55,6 +55,7 @@
 		"@capacitor/camera": "^7.0.2",
 		"@capacitor/cli": "^7.4.4",
 		"@capacitor/core": "^7.4.4",
+		"@capacitor/geolocation": "^7.1.5",
 		"@capacitor/ios": "^7.4.4",
 		"lucide-svelte": "^0.554.0"
 	}

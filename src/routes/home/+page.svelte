@@ -92,7 +92,7 @@
 <div class="min-h-screen pb-20 bg-secondary/30">
 	<!-- Header -->
 	<header
-		class="px-6 py-4 bg-background fixed top-0 left-0 right-0 z-50 pt-[calc(1rem+env(safe-area-inset-top))]"
+		class="px-6 py-4 bg-background sticky top-0 z-50 pt-[calc(1rem+env(safe-area-inset-top))]"
 	>
 		<div class="container-responsive">
 			<div class="flex items-center justify-between mb-4">
@@ -150,7 +150,7 @@
 		</div>
 	</header>
 
-	<main class="px-6 py-6 space-y-8 pt-40 pb-24">
+	<main class="px-6 py-6 space-y-8 pb-24">
 		<div class="container-responsive desktop-main-layout space-y-8 lg:space-y-0">
 			<!-- Left Column (Desktop) -->
 			<div class="space-y-8 lg:col-start-1 lg:row-start-1">

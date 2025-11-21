@@ -51,5 +51,7 @@
 	<string>GreenEye needs access to your photo library to select plant images for diagnosis.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>GreenEye needs permission to save plant diagnosis images to your photo library.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GreenEye needs your location to provide local weather information for better plant care recommendations.</string>
 </dict>
 </plist>

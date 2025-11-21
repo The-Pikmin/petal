@@ -4,11 +4,20 @@ PODS:
   - CapacitorCamera (7.0.2):
     - Capacitor
   - CapacitorCordova (7.4.4)
+  - CapacitorGeolocation (7.1.5):
+    - Capacitor
+    - IONGeolocationLib (= 1.0.1)
+  - IONGeolocationLib (1.0.1)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
   - "CapacitorCamera (from `../../node_modules/.pnpm/@capacitor+camera@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/camera`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios`)"
+  - "CapacitorGeolocation (from `../../node_modules/.pnpm/@capacitor+geolocation@7.1.5_@capacitor+core@7.4.4/node_modules/@capacitor/geolocation`)"
+
+SPEC REPOS:
+  trunk:
+    - IONGeolocationLib
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -17,12 +26,16 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/.pnpm/@capacitor+camera@7.0.2_@capacitor+core@7.4.4/node_modules/@capacitor/camera"
   CapacitorCordova:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.4.4_@capacitor+core@7.4.4/node_modules/@capacitor/ios"
+  CapacitorGeolocation:
+    :path: "../../node_modules/.pnpm/@capacitor+geolocation@7.1.5_@capacitor+core@7.4.4/node_modules/@capacitor/geolocation"
 
 SPEC CHECKSUMS:
   Capacitor: 358dd1c3fdd71d969547b17e159fd8a7736cb45f
   CapacitorCamera: f9e54db0a18bb218a8dc360907d63aaefe9209ff
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
+  CapacitorGeolocation: 84f868bea4c2499aebc3bb3a88fd0a508f87ab87
+  IONGeolocationLib: 20f9d0248a0b5264511fb57a37e25dd2badf797a
 
-PODFILE CHECKSUM: 83558748c9fc1ef2567996ef3adc5656e489b172
+PODFILE CHECKSUM: b7e0a6b2e7b9032cbb6f6c702135cd84e8500a14
 
 COCOAPODS: 1.16.2
