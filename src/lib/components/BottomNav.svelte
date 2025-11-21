@@ -7,7 +7,7 @@
 	let currentPath = $derived($page.url.pathname);
 
 	const navItems = [
-		{ icon: Home, label: "Home", path: "/" },
+		{ icon: Home, label: "Home", path: "/home" },
 		{ icon: BookOpen, label: "Library", path: "/library" },
 		{ icon: Camera, label: "Scan", path: "/camera", isCenter: true },
 		{ icon: History, label: "History", path: "/history" },

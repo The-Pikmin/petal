@@ -6,9 +6,6 @@
 		User,
 		Mail,
 		Calendar,
-		Camera,
-		Leaf,
-		AlertCircle,
 		Bell,
 		Globe,
 		Shield,
@@ -129,60 +126,6 @@
 						>
 							<Edit size={18} />
 						</button>
-					</div>
-				</div>
-
-				<!-- Statistics Cards -->
-				<div class="grid grid-cols-3 gap-3 lg:grid-cols-1">
-					<!-- Total Scans -->
-					<div
-						class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border lg:flex lg:items-center lg:gap-4 lg:text-left lg:px-6"
-					>
-						<div
-							class="w-12 h-12 mx-auto lg:mx-0 mb-2 lg:mb-0 rounded-full flex items-center justify-center bg-primary/10 text-primary"
-						>
-							<Camera size={20} />
-						</div>
-						<div>
-							<p class="text-2xl font-bold text-foreground mb-1 lg:mb-0">
-								{userProfile.stats.totalScans}
-							</p>
-							<p class="text-xs text-muted-foreground">Scans</p>
-						</div>
-					</div>
-
-					<!-- Plants Saved -->
-					<div
-						class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border lg:flex lg:items-center lg:gap-4 lg:text-left lg:px-6"
-					>
-						<div
-							class="w-12 h-12 mx-auto lg:mx-0 mb-2 lg:mb-0 rounded-full flex items-center justify-center bg-green-500/10 text-green-600 dark:text-green-400"
-						>
-							<Leaf size={20} />
-						</div>
-						<div>
-							<p class="text-2xl font-bold text-foreground mb-1 lg:mb-0">
-								{userProfile.stats.plantsSaved}
-							</p>
-							<p class="text-xs text-muted-foreground">Plants</p>
-						</div>
-					</div>
-
-					<!-- Diseases Identified -->
-					<div
-						class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border lg:flex lg:items-center lg:gap-4 lg:text-left lg:px-6"
-					>
-						<div
-							class="w-12 h-12 mx-auto lg:mx-0 mb-2 lg:mb-0 rounded-full flex items-center justify-center bg-orange-500/10 text-orange-600 dark:text-orange-400"
-						>
-							<AlertCircle size={20} />
-						</div>
-						<div>
-							<p class="text-2xl font-bold text-foreground mb-1 lg:mb-0">
-								{userProfile.stats.diseasesIdentified}
-							</p>
-							<p class="text-xs text-muted-foreground">Diseases</p>
-						</div>
 					</div>
 				</div>
 
