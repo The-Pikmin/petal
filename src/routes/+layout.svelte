@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { page } from "$app/stores";
+	import BottomNav from "$lib/components/BottomNav.svelte";
 	import favicon from "$lib/assets/favicon.svg";
 	import "../app.css";
 
@@ -10,3 +12,7 @@
 </svelte:head>
 
 {@render children()}
+
+{#if $page.url.pathname !== "/camera"}
+	<BottomNav />
+{/if}
