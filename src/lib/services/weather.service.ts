@@ -24,23 +24,51 @@ export class WeatherService {
 			const location = await this.getUserLocation();
 
 			// Fetch weather data from Open-Meteo API
-			const response = await fetch(
+			const weatherResponse = await fetch(
 				`https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit`
 			);
 
-			if (!response.ok) {
+			if (!weatherResponse.ok) {
 				throw new Error("Failed to fetch weather data");
 			}
 
-			const data = await response.json();
+			const weatherData = await weatherResponse.json();
+
+			// Fetch location name (Reverse Geocoding)
+			// Using BigDataCloud's free client-side reverse geocoding API
+			// No API key required for client-side requests
+			let locationName = "Current Location";
+			try {
+				const geoResponse = await fetch(
+					`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=en`
+				);
+				if (geoResponse.ok) {
+					const geoData = await geoResponse.json();
+					// Construct location string: "City, State" or "City, Country"
+					const city = geoData.city || geoData.locality || "";
+					const region =
+						geoData.principalSubdivisionCode || geoData.principalSubdivision || "";
+
+					if (city && region) {
+						locationName = `${city}, ${region}`;
+					} else if (city) {
+						locationName = city;
+					} else if (geoData.countryName) {
+						locationName = geoData.countryName;
+					}
+				}
+			} catch (geoError) {
+				console.warn("Reverse geocoding failed:", geoError);
+				// Fallback to "Current Location" is already set
+			}
 
 			return {
-				temperature: Math.round(data.current.temperature_2m),
-				location: "Current Location", // Could use reverse geocoding for actual city name
-				condition: this.getWeatherCondition(data.current.weather_code),
-				icon: this.getWeatherIcon(data.current.weather_code),
-				humidity: data.current.relative_humidity_2m,
-				windSpeed: data.current.wind_speed_10m,
+				temperature: Math.round(weatherData.current.temperature_2m),
+				location: locationName,
+				condition: this.getWeatherCondition(weatherData.current.weather_code),
+				icon: this.getWeatherIcon(weatherData.current.weather_code),
+				humidity: weatherData.current.relative_humidity_2m,
+				windSpeed: weatherData.current.wind_speed_10m,
 			};
 		} catch (error) {
 			console.error("Weather fetch error:", error);

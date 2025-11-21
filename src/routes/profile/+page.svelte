@@ -17,6 +17,7 @@
 		Moon,
 		Edit,
 	} from "lucide-svelte";
+	import { fade, fly } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
@@ -96,6 +97,7 @@
 				<!-- Profile Card -->
 				<div
 					class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+					in:fade={{ duration: 400, delay: 100 }}
 				>
 					<div class="flex items-center gap-4 mb-4">
 						<!-- Avatar -->
@@ -132,6 +134,7 @@
 				<!-- Theme Toggle Card -->
 				<div
 					class="rounded-3xl p-4 bg-card text-card-foreground shadow-sm border border-border"
+					in:fade={{ duration: 400, delay: 200 }}
 				>
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-3">
@@ -164,8 +167,11 @@
 			<!-- Right Column (Desktop) -->
 			<div class="space-y-6 lg:col-start-2 lg:row-start-1">
 				<!-- Settings Sections -->
-				{#each settingsSections as section}
-					<div class="space-y-2">
+				{#each settingsSections as section, i (section.title)}
+					<div
+						class="space-y-2"
+						in:fly|global={{ y: 20, duration: 400, delay: 300 + i * 100 }}
+					>
 						<h3 class="text-sm font-semibold text-muted-foreground px-2">
 							{section.title}
 						</h3>
@@ -205,6 +211,7 @@
 				<div class="pt-4">
 					<button
 						class="w-full px-6 py-4 rounded-3xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-destructive text-white flex items-center justify-center gap-2"
+						in:fly|global={{ y: 20, duration: 400, delay: 700 }}
 					>
 						<LogOut size={20} />
 						Sign Out
@@ -222,9 +229,8 @@
 
 <style>
 	/* Smooth transitions */
+	/* Smooth transitions */
 	button {
-		transition:
-			transform 0.2s ease,
-			background-color 0.3s ease;
+		transition: background-color 0.3s ease;
 	}
 </style>

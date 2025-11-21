@@ -2,10 +2,12 @@
 	import { mockDiseaseLibrary } from "$lib/services/mock-data";
 	import type { DiseaseLibraryEntry } from "$lib/types";
 	import { Search, AlertCircle, Droplet, Bug, Leaf } from "lucide-svelte";
+	import { fly, fade } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
 	let searchQuery = $state("");
+	let isSearchOpen = $state(false);
 	let selectedCategory = $state<string>("all");
 	let diseases = $state<DiseaseLibraryEntry[]>(mockDiseaseLibrary);
 
@@ -19,7 +21,7 @@
 		{ id: "environmental", label: "Environmental", icon: Leaf },
 	];
 
-	const filteredDiseases = $derived(() => {
+	const filteredDiseases = $derived.by(() => {
 		let filtered = diseases;
 
 		// Filter by category
@@ -86,31 +88,64 @@
 		class="px-6 py-6 bg-background sticky top-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
 	>
 		<div class="container-responsive">
-			<div class="flex items-center justify-between mb-6">
-				<div>
-					<h1 class="text-2xl font-bold text-foreground mb-1">Plant Library</h1>
-					<p class="text-sm text-muted-foreground">Explore common plant diseases</p>
-				</div>
-				<div class="flex items-center gap-2">
-					<button
-						class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
-						aria-label="Search"
+			<div class="flex items-center justify-between mb-6 h-14">
+				{#if isSearchOpen}
+					<div
+						class="flex-1 flex items-center gap-2 mr-2"
+						in:fly={{ x: 50, duration: 300 }}
 					>
-						<Search size={20} />
-					</button>
-					<HamburgerMenu />
-				</div>
+						<div class="relative flex-1">
+							<Search
+								class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+								size={18}
+							/>
+							<!-- svelte-ignore a11y_autofocus -->
+							<input
+								type="text"
+								bind:value={searchQuery}
+								placeholder="Search diseases..."
+								class="w-full pl-10 pr-4 py-2 rounded-full bg-secondary text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+								autofocus
+							/>
+						</div>
+						<button
+							onclick={() => {
+								isSearchOpen = false;
+								searchQuery = "";
+							}}
+							class="text-sm font-medium text-muted-foreground hover:text-foreground"
+						>
+							Cancel
+						</button>
+					</div>
+				{:else}
+					<div>
+						<h1 class="text-2xl font-bold text-foreground mb-1">Plant Library</h1>
+						<p class="text-sm text-muted-foreground">Explore common plant diseases</p>
+					</div>
+					<div class="flex items-center gap-2">
+						<button
+							onclick={() => (isSearchOpen = true)}
+							class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
+							aria-label="Search"
+						>
+							<Search size={20} />
+						</button>
+						<HamburgerMenu />
+					</div>
+				{/if}
 			</div>
 
 			<!-- Categories -->
 			<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
-				{#each categories as category}
+				{#each categories as category, i}
 					<button
 						onclick={() => (selectedCategory = category.id)}
 						class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {selectedCategory ===
 						category.id
 							? 'bg-primary text-primary-foreground'
 							: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
+						in:fly={{ x: 20, duration: 400, delay: 200 + i * 50 }}
 					>
 						{category.label}
 					</button>
@@ -123,16 +158,17 @@
 	<main class="px-6 py-4 pb-28">
 		<div class="container-responsive">
 			<!-- Results Count -->
-			<p class="text-sm text-muted-foreground mb-4">
-				{filteredDiseases().length} disease{filteredDiseases().length !== 1 ? "s" : ""} found
+			<p class="text-sm text-muted-foreground mb-4" in:fade={{ duration: 400, delay: 300 }}>
+				{filteredDiseases.length} disease{filteredDiseases.length !== 1 ? "s" : ""} found
 			</p>
 
 			<!-- Disease Grid -->
-			{#if filteredDiseases().length > 0}
+			{#if filteredDiseases.length > 0}
 				<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-					{#each filteredDiseases() as disease}
+					{#each filteredDiseases as disease, i (disease.id || i)}
 						<button
-							class="rounded-3xl p-4 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
+							class="rounded-3xl p-4 text-left hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
+							in:fly|global={{ y: 20, duration: 400, delay: 200 + i * 50 }}
 						>
 							<div class="flex gap-4 h-full">
 								<!-- Disease Image -->
@@ -222,9 +258,8 @@
 	}
 
 	/* Smooth transitions */
+	/* Smooth transitions */
 	button {
-		transition:
-			transform 0.2s ease,
-			background-color 0.3s ease;
+		transition: background-color 0.3s ease;
 	}
 </style>

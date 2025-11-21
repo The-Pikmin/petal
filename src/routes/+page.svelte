@@ -220,8 +220,8 @@
 						</div>
 						<h3 class="text-xl font-bold mb-3">Instant ID</h3>
 						<p class="text-muted-foreground">
-							Identify over 20,000 plant species with a single photo. Know exactly
-							what you're growing.
+							Identify plant species with a single photo. Know exactly what you're
+							growing.
 						</p>
 					</div>
 

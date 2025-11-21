@@ -3,6 +3,7 @@
 	import { mockScanHistory } from "$lib/services/mock-data";
 	import type { ScanRecord } from "$lib/types";
 	import { Clock, CheckCircle, AlertCircle, Camera } from "lucide-svelte";
+	import { fly } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
@@ -71,8 +72,10 @@
 		return "text-orange-600 dark:text-orange-400";
 	}
 
-	function getConfidenceWidth(confidence: number) {
-		return `${confidence * 100}%`;
+	function animateWidth(node: HTMLElement, confidence: number) {
+		setTimeout(() => {
+			node.style.width = `${confidence * 100}%`;
+		}, 100);
 	}
 </script>
 
@@ -112,9 +115,10 @@
 			{#if scanHistory.length > 0}
 				<!-- Scan Timeline -->
 				<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-					{#each scanHistory as scan}
+					{#each scanHistory as scan, i (scan.id || i)}
 						<button
-							class="w-full rounded-3xl p-4 text-left transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
+							class="w-full rounded-3xl p-4 text-left hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
+							in:fly|global={{ y: 20, duration: 400, delay: 200 + i * 50 }}
 						>
 							<div class="flex gap-4 h-full">
 								<!-- Scan Image -->
@@ -177,12 +181,11 @@
 											class="w-full h-1.5 bg-muted rounded-full overflow-hidden"
 										>
 											<div
-												class="h-full rounded-full transition-all {getConfidenceColor(
+												class="h-full rounded-full transition-all duration-1000 ease-out {getConfidenceColor(
 													scan.diagnosis.confidence
 												)} bg-current"
-												style="width: {getConfidenceWidth(
-													scan.diagnosis.confidence
-												)}"
+												style="width: 0%"
+												use:animateWidth={scan.diagnosis.confidence}
 											></div>
 										</div>
 									</div>
@@ -239,9 +242,8 @@
 
 <style>
 	/* Smooth transitions */
+	/* Smooth transitions */
 	button {
-		transition:
-			transform 0.2s ease,
-			background-color 0.3s ease;
+		transition: background-color 0.3s ease;
 	}
 </style>

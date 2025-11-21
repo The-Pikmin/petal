@@ -19,6 +19,8 @@
 		Camera,
 		AlertCircle,
 	} from "lucide-svelte";
+	import { tweened } from "svelte/motion";
+	import { cubicOut } from "svelte/easing";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
@@ -29,7 +31,16 @@
 	let weather = $state<WeatherData | null>(null);
 	let recentScans = $state<ScanRecord[]>([]);
 
+	const totalScans = tweened(0, { duration: 1000, easing: cubicOut });
+	const plantsSaved = tweened(0, { duration: 1000, easing: cubicOut });
+	const diseasesIdentified = tweened(0, { duration: 1000, easing: cubicOut });
+
 	onMount(async () => {
+		// Animate stats
+		totalScans.set(mockUserProfile.stats.totalScans);
+		plantsSaved.set(mockUserProfile.stats.plantsSaved);
+		diseasesIdentified.set(mockUserProfile.stats.diseasesIdentified);
+
 		// Fetch weather data
 		try {
 			weather = await WeatherService.getCurrentWeather();
@@ -49,11 +60,56 @@
 	}
 
 	function getWeatherIcon(condition: string) {
-		if (condition.includes("Rain") || condition.includes("Drizzle")) return CloudRain;
+		// Clear / Sunny
+		if (condition === "Clear" || condition === "Mainly Clear") return Sun;
+
+		// Cloudy
+		if (condition === "Partly Cloudy") return CloudSun;
+		if (condition === "Overcast" || condition === "Cloudy") return Cloud;
+		if (condition === "Foggy") return Cloud; // Using Cloud for fog as best approximation
+
+		// Rain / Drizzle
+		if (condition.includes("Drizzle")) return CloudRain;
+		if (condition.includes("Rain")) return CloudRain;
+		if (condition.includes("Showers")) return CloudRain;
+
+		// Snow
 		if (condition.includes("Snow")) return Snowflake;
-		if (condition.includes("Cloud")) return Cloud;
-		if (condition.includes("Partly")) return CloudSun;
-		return Sun;
+
+		// Thunderstorm
+		if (condition.includes("Thunderstorm")) return CloudRain; // Could import CloudLightning if available, defaulting to Rain for now
+
+		return Sun; // Default
+	}
+
+	function getWeatherAnimation(condition: string) {
+		// Clear / Sunny - Custom radiate animation (spin + pulse)
+		if (condition === "Clear" || condition === "Mainly Clear") return "animate-sun-radiate";
+
+		// Cloudy - Pulse for clouds
+		if (
+			condition === "Partly Cloudy" ||
+			condition === "Overcast" ||
+			condition === "Cloudy" ||
+			condition === "Foggy"
+		)
+			return "animate-[pulse_4s_ease-in-out_infinite]";
+
+		// Rain / Drizzle - Bounce for rain drops
+		if (
+			condition.includes("Rain") ||
+			condition.includes("Drizzle") ||
+			condition.includes("Showers")
+		)
+			return "animate-[bounce_2s_infinite]";
+
+		// Snow - Gentle spin/float
+		if (condition.includes("Snow")) return "animate-[spin_3s_linear_infinite]";
+
+		// Thunderstorm - Fast pulse or flash
+		if (condition.includes("Thunderstorm")) return "animate-[pulse_0.5s_ease-in-out_infinite]";
+
+		return "animate-sun-radiate"; // Default
 	}
 
 	function getHealthColor(status: string) {
@@ -98,14 +154,15 @@
 			<div class="flex items-center justify-between mb-4">
 				<!-- Profile Icon & Greeting -->
 				<div class="flex items-center gap-4">
-					<div
-						class="w-10 h-10 rounded-full flex items-center justify-center bg-primary text-primary-foreground"
+					<button
+						onclick={() => goto("/profile")}
+						class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-sm hover:opacity-90 transition-opacity"
 					>
 						<Leaf size={20} />
-					</div>
+					</button>
 					<div>
-						<p class="text-sm text-muted-foreground">Good morning</p>
-						<p class="font-semibold text-foreground">Gardener</p>
+						<p class="text-xs text-muted-foreground">Good morning</p>
+						<h2 class="font-bold text-foreground leading-none">Gardener</h2>
 					</div>
 				</div>
 
@@ -117,16 +174,19 @@
 						aria-label="Toggle theme"
 					>
 						{#if $theme === "light"}
-							<Moon size={20} />
-						{:else}
 							<Sun size={20} />
+						{:else}
+							<Moon size={20} />
 						{/if}
 					</button>
 					<button
-						class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
+						class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted relative"
 						aria-label="Notifications"
 					>
 						<Bell size={20} />
+						<span
+							class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"
+						></span>
 					</button>
 
 					<!-- Desktop Hamburger Menu -->
@@ -170,7 +230,7 @@
 									{weather.location}
 								</p>
 							</div>
-							<div class="text-primary">
+							<div class="text-primary {getWeatherAnimation(weather.condition)}">
 								<Icon size={48} />
 							</div>
 						</div>
@@ -188,14 +248,14 @@
 						<!-- Loading placeholder -->
 						<div class="flex items-center justify-between">
 							<div class="flex-1">
-								<div class="h-12 w-24 bg-muted rounded-lg mb-2 animate-pulse"></div>
-								<div class="h-4 w-32 bg-muted rounded animate-pulse"></div>
+								<div class="h-10 w-24 bg-muted rounded-lg mb-1 animate-pulse"></div>
+								<div class="h-5 w-32 bg-muted rounded animate-pulse"></div>
 							</div>
 							<div class="w-12 h-12 bg-muted rounded-full animate-pulse"></div>
 						</div>
 						<div class="mt-4 flex items-center justify-between">
-							<div class="h-4 w-24 bg-muted rounded animate-pulse"></div>
-							<div class="h-8 w-16 bg-muted rounded-full animate-pulse"></div>
+							<div class="h-5 w-24 bg-muted rounded animate-pulse"></div>
+							<div class="h-9 w-16 bg-muted rounded-full animate-pulse"></div>
 						</div>
 					{/if}
 				</div>
@@ -205,6 +265,7 @@
 					<!-- Total Scans -->
 					<div
 						class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border flex flex-col items-center justify-center"
+						in:fly={{ y: 20, duration: 400, delay: 150 }}
 					>
 						<div
 							class="w-10 h-10 mb-2 rounded-full flex items-center justify-center bg-primary/10 text-primary"
@@ -212,7 +273,7 @@
 							<Camera size={18} />
 						</div>
 						<p class="text-xl font-bold text-foreground leading-none mb-1">
-							{mockUserProfile.stats.totalScans}
+							{Math.round($totalScans)}
 						</p>
 						<p
 							class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider"
@@ -224,6 +285,7 @@
 					<!-- Plants Saved -->
 					<div
 						class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border flex flex-col items-center justify-center"
+						in:fly={{ y: 20, duration: 400, delay: 200 }}
 					>
 						<div
 							class="w-10 h-10 mb-2 rounded-full flex items-center justify-center bg-green-500/10 text-green-600 dark:text-green-400"
@@ -231,7 +293,7 @@
 							<Leaf size={18} />
 						</div>
 						<p class="text-xl font-bold text-foreground leading-none mb-1">
-							{mockUserProfile.stats.plantsSaved}
+							{Math.round($plantsSaved)}
 						</p>
 						<p
 							class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider"
@@ -243,6 +305,7 @@
 					<!-- Diseases Identified -->
 					<div
 						class="rounded-2xl p-4 text-center bg-card text-card-foreground shadow-sm border border-border flex flex-col items-center justify-center"
+						in:fly={{ y: 20, duration: 400, delay: 250 }}
 					>
 						<div
 							class="w-10 h-10 mb-2 rounded-full flex items-center justify-center bg-orange-500/10 text-orange-600 dark:text-orange-400"
@@ -250,7 +313,7 @@
 							<AlertCircle size={18} />
 						</div>
 						<p class="text-xl font-bold text-foreground leading-none mb-1">
-							{mockUserProfile.stats.diseasesIdentified}
+							{Math.round($diseasesIdentified)}
 						</p>
 						<p
 							class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider"
@@ -329,9 +392,10 @@
 							<span class="text-sm font-medium">Add Plant</span>
 						</button>
 
-						{#each mockMyPlants as plant}
+						{#each mockMyPlants as plant, i}
 							<div
 								class="min-w-[160px] w-[160px] h-[200px] rounded-3xl bg-card border border-border p-3 flex flex-col relative snap-start flex-shrink-0 shadow-sm"
+								in:fly={{ y: 20, duration: 400, delay: 300 + i * 50 }}
 							>
 								<div
 									class="w-full aspect-square rounded-2xl bg-muted mb-3 overflow-hidden relative"
@@ -370,9 +434,10 @@
 					<section>
 						<h2 class="text-xl font-bold text-foreground mb-4">Recent Scans</h2>
 						<div class="space-y-3">
-							{#each recentScans.slice(0, 3) as scan}
+							{#each recentScans.slice(0, 3) as scan, i}
 								<div
 									class="flex items-center gap-4 p-3 rounded-2xl bg-card border border-border shadow-sm"
+									in:fly={{ x: 20, duration: 400, delay: 400 + i * 50 }}
 								>
 									<div
 										class="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0"
@@ -433,9 +498,10 @@
 						bind:this={diseasesScroll}
 						class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x scroll-smooth"
 					>
-						{#each mockCommonDiseases as disease}
+						{#each mockCommonDiseases as disease, i}
 							<div
 								class="min-w-[240px] rounded-3xl bg-card border border-border overflow-hidden snap-start flex-shrink-0 shadow-sm"
+								in:fly={{ y: 20, duration: 400, delay: 500 + i * 50 }}
 							>
 								<div class="h-32 bg-muted relative">
 									<!-- Placeholder for disease image -->
