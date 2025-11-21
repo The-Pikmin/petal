@@ -5,6 +5,7 @@
 	import BottomNav from "$lib/components/BottomNav.svelte";
 	import SplashScreen from "$lib/components/SplashScreen.svelte";
 	import logoDark from "$lib/assets/logo-dark.png";
+	import { isSplashVisible } from "$lib/stores/splash.store";
 	import "../app.css";
 
 	let { children } = $props();
@@ -15,6 +16,7 @@
 		const hasSeenSplash = sessionStorage.getItem("hasSeenSplash");
 		if (!hasSeenSplash) {
 			showSplash = true;
+			isSplashVisible.set(true);
 		}
 	}
 
@@ -23,6 +25,9 @@
 			sessionStorage.setItem("hasSeenSplash", "true");
 		}
 		showSplash = false;
+		setTimeout(() => {
+			isSplashVisible.set(false);
+		}, 500); // Wait for fade out
 	}
 </script>
 
