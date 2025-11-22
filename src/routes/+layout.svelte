@@ -41,6 +41,6 @@
 
 {@render children()}
 
-{#if $page.url.pathname !== "/" && $page.url.pathname !== "/login" && $page.url.pathname !== "/signup" && $page.url.pathname !== "/camera" && $page.url.pathname !== "/onboarding"}
+{#if $page.url.pathname !== "/" && $page.url.pathname !== "/login" && $page.url.pathname !== "/signup" && $page.url.pathname !== "/camera" && $page.url.pathname !== "/scan" && $page.url.pathname !== "/onboarding"}
 	<BottomNav />
 {/if}

@@ -75,7 +75,7 @@
 		tabindex="-1"
 	>
 		<!-- Backdrop -->
-		<div class="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
+		<div class="absolute inset-0 bg-background/90"></div>
 
 		<!-- Modal Card -->
 		<div
@@ -120,7 +120,7 @@
 							id="correct-disease"
 							bind:value={selectedDisease}
 							required
-							class="w-full px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+							class="w-full px-4 py-3 rounded-2xl bg-secondary border-2 border-border text-foreground focus:outline-none focus:border-primary"
 						>
 							<option value="" disabled>Select the correct disease...</option>
 							{#each diseases as disease}
@@ -140,7 +140,7 @@
 							placeholder="Describe what you observed that differs from the prediction..."
 							rows="4"
 							maxlength="500"
-							class="w-full px-4 py-3 rounded-2xl bg-secondary border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+							class="w-full px-4 py-3 rounded-2xl bg-secondary border-2 border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary resize-none"
 						></textarea>
 						<p class="text-xs text-muted-foreground mt-1 text-right">
 							{userNotes.length}/500
@@ -187,6 +187,15 @@
 		background-position: right 0.75rem center;
 		background-size: 1.25rem;
 		padding-right: 2.5rem;
+	}
+
+	/* Performance optimizations for inputs */
+	select,
+	textarea {
+		will-change: contents;
+		transform: translateZ(0);
+		backface-visibility: hidden;
+		contain: layout style paint;
 	}
 
 	/* Ensure smooth scrolling */
