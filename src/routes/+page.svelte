@@ -7,13 +7,19 @@
 	import logoDark from "$lib/assets/logo-dark.png";
 	import logoLight from "$lib/assets/logo-light.png";
 
+	import { hasSeenOnboarding } from "$lib/stores/onboarding.store";
+
 	let isMenuOpen = $state(false);
 
-	// Redirect to home on native platforms
+	// Redirect to home or onboarding on native platforms
 	onMount(async () => {
 		const { Capacitor } = await import("@capacitor/core");
 		if (Capacitor.isNativePlatform()) {
-			goto("/home");
+			if (!$hasSeenOnboarding) {
+				goto("/onboarding");
+			} else {
+				goto("/home");
+			}
 		}
 	});
 

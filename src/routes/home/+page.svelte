@@ -22,6 +22,7 @@
 	import { tweened } from "svelte/motion";
 	import { cubicOut } from "svelte/easing";
 	import { isSplashVisible } from "$lib/stores/splash.store";
+	import { hasLoadedHome } from "$lib/stores/app.store";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
@@ -31,6 +32,7 @@
 
 	let weather = $state<WeatherData | null>(null);
 	let recentScans = $state<ScanRecord[]>([]);
+	let showContent = $state(false);
 
 	const totalScans = tweened(0, { duration: 1000, easing: cubicOut });
 	const plantsSaved = tweened(0, { duration: 1000, easing: cubicOut });
@@ -43,6 +45,15 @@
 				totalScans.set(mockUserProfile.stats.totalScans);
 				plantsSaved.set(mockUserProfile.stats.plantsSaved);
 				diseasesIdentified.set(mockUserProfile.stats.diseasesIdentified);
+
+				if ($hasLoadedHome) {
+					showContent = true;
+				} else {
+					setTimeout(() => {
+						showContent = true;
+						hasLoadedHome.set(true);
+					}, 600);
+				}
 			}
 		});
 
@@ -158,7 +169,7 @@
 </svelte:head>
 
 <!-- Container for max-width on larger screens -->
-<div class="min-h-screen pb-20 bg-secondary/30">
+<div class="min-h-screen pb-20 bg-secondary/30" in:fade={{ duration: $hasLoadedHome ? 0 : 600 }}>
 	<!-- Header -->
 	<header
 		class="px-6 py-4 bg-background sticky top-0 z-50 pt-[calc(1rem+env(safe-area-inset-top))]"
@@ -224,7 +235,7 @@
 	</header>
 
 	<main class="px-6 py-6 space-y-8 pb-24">
-		{#if !$isSplashVisible}
+		{#if !$isSplashVisible && showContent}
 			<div class="container-responsive desktop-main-layout space-y-8 lg:space-y-0">
 				<!-- Left Column (Desktop) -->
 				<div class="space-y-8 lg:col-start-1 lg:row-start-1">
@@ -373,7 +384,10 @@
 				<div class="space-y-8 lg:col-start-2 lg:row-start-1">
 					<!-- My Garden Section -->
 					<section class="relative group/garden">
-						<div class="flex items-center justify-between mb-4">
+						<div
+							class="flex items-center justify-between mb-4"
+							in:fly={{ y: 20, duration: 400, delay: 250 }}
+						>
 							<h2 class="text-xl font-bold text-foreground">My Garden</h2>
 							<button class="text-sm font-medium text-primary hover:underline"
 								>See All</button
@@ -405,6 +419,7 @@
 							<button
 								onclick={handleScanPlant}
 								class="min-w-[140px] w-[140px] h-[200px] rounded-3xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:bg-muted/50 transition-colors snap-start flex-shrink-0"
+								in:fly={{ y: 20, duration: 400, delay: 300 }}
 							>
 								<div
 									class="w-12 h-12 rounded-full bg-muted flex items-center justify-center"
@@ -414,10 +429,10 @@
 								<span class="text-sm font-medium">Add Plant</span>
 							</button>
 
-							{#each mockMyPlants as plant, i}
+							{#each mockMyPlants as plant, i (plant.id)}
 								<div
 									class="min-w-[160px] w-[160px] h-[200px] rounded-3xl bg-card border border-border p-3 flex flex-col relative snap-start flex-shrink-0 shadow-sm"
-									in:fly={{ y: 20, duration: 400, delay: 300 + i * 50 }}
+									in:fly|global={{ y: 20, duration: 400, delay: 350 + i * 50 }}
 								>
 									<div
 										class="w-full aspect-square rounded-2xl bg-muted mb-3 overflow-hidden relative"
@@ -454,12 +469,21 @@
 					<!-- Recent Scans Section -->
 					{#if recentScans.length > 0}
 						<section>
-							<h2 class="text-xl font-bold text-foreground mb-4">Recent Scans</h2>
+							<h2
+								class="text-xl font-bold text-foreground mb-4"
+								in:fly={{ y: 20, duration: 400, delay: 400 }}
+							>
+								Recent Scans
+							</h2>
 							<div class="space-y-3">
 								{#each recentScans.slice(0, 3) as scan, i}
 									<div
 										class="flex items-center gap-4 p-3 rounded-2xl bg-card border border-border shadow-sm"
-										in:fly={{ x: 20, duration: 400, delay: 400 + i * 50 }}
+										in:fly|global={{
+											x: 20,
+											duration: 400,
+											delay: 450 + i * 50,
+										}}
 									>
 										<div
 											class="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0"
@@ -499,7 +523,12 @@
 
 					<!-- Common Diseases -->
 					<section class="relative group/diseases">
-						<h2 class="text-xl font-bold text-foreground mb-4">Common Diseases</h2>
+						<h2
+							class="text-xl font-bold text-foreground mb-4"
+							in:fly={{ y: 20, duration: 400, delay: 500 }}
+						>
+							Common Diseases
+						</h2>
 
 						<!-- Navigation Arrows -->
 						<button
@@ -521,10 +550,10 @@
 							bind:this={diseasesScroll}
 							class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x scroll-smooth"
 						>
-							{#each mockCommonDiseases as disease, i}
+							{#each mockCommonDiseases as disease, i (disease.id)}
 								<div
 									class="min-w-[240px] rounded-3xl bg-card border border-border overflow-hidden snap-start flex-shrink-0 shadow-sm"
-									in:fly={{ y: 20, duration: 400, delay: 500 + i * 50 }}
+									in:fly|global={{ y: 20, duration: 400, delay: 500 + i * 50 }}
 								>
 									<div class="h-32 bg-muted relative">
 										<!-- Placeholder for disease image -->
