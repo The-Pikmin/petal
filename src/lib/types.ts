@@ -58,6 +58,28 @@ export interface ScanRecord {
 	plantName?: string;
 	/** User notes */
 	notes?: string;
+	/** Whether this diagnosis has been flagged as incorrect */
+	flagged?: boolean;
+	/** Reference to the flag report if flagged */
+	flagReportId?: string;
+}
+
+/**
+ * Represents a diagnosis flag report for incorrect predictions
+ */
+export interface DiagnosisFlagReport {
+	/** Unique identifier for the flag report */
+	id: string;
+	/** Reference to the scan record that was flagged */
+	scanId: string;
+	/** The disease name that was predicted (incorrect) */
+	predictedDisease: string;
+	/** The correct disease according to the user */
+	correctDisease: string;
+	/** Optional notes from the user */
+	userNotes?: string;
+	/** Timestamp when flagged */
+	timestamp: number;
 }
 
 /**
