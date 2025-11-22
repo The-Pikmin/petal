@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
-	import type { CapturedPhoto, DiagnosisResult, ScanRecord } from "$lib/types";
+	import type {
+		CapturedPhoto,
+		DiagnosisResult,
+		ScanRecord,
+		DiagnosisFlagReport,
+	} from "$lib/types";
 	import {
 		CheckCircle,
 		AlertCircle,
@@ -11,12 +16,17 @@
 		Home,
 		Camera,
 		Save,
+		Flag,
 	} from "lucide-svelte";
+	import FlagDiagnosisModal from "$lib/components/FlagDiagnosisModal.svelte";
 
 	let photo = $state<CapturedPhoto | null>(null);
 	let isAnalyzing = $state(false);
 	let diagnosis = $state<DiagnosisResult | null>(null);
 	let isSaved = $state(false);
+	let isFlagModalOpen = $state(false);
+	let isFlagged = $state(false);
+	let currentScanId = $state<string | null>(null);
 
 	onMount(() => {
 		// Get photo data from session storage
@@ -218,13 +228,17 @@
 		isSaved = true;
 
 		// Create scan record
+		const scanId = `scan-${Date.now()}`;
 		const scanRecord: ScanRecord = {
-			id: `scan-${Date.now()}`,
+			id: scanId,
 			photo,
 			diagnosis,
 			timestamp: Date.now(),
 			plantName: "Scanned Plant",
 		};
+
+		// Store current scan ID for flagging
+		currentScanId = scanId;
 
 		// Store in sessionStorage (in real app, would save to backend/database)
 		const existingHistory = sessionStorage.getItem("scanHistory");
@@ -236,6 +250,57 @@
 		setTimeout(() => {
 			goto("/history");
 		}, 1500);
+	}
+
+	function openFlagModal() {
+		isFlagModalOpen = true;
+	}
+
+	function handleFlagSubmit(correctDisease: string, userNotes?: string) {
+		if (!diagnosis) return;
+
+		// Create flag report
+		const flagReport: DiagnosisFlagReport = {
+			id: `flag-${Date.now()}`,
+			scanId: currentScanId || `scan-${Date.now()}`,
+			predictedDisease: diagnosis.diseaseName,
+			correctDisease,
+			userNotes,
+			timestamp: Date.now(),
+		};
+
+		// TODO: Replace with actual API endpoint
+		// POST /api/diagnosis-flags
+		// Headers: { Authorization: Bearer ${token} }
+		// Body: DiagnosisFlagReport
+
+		// Store flag report in sessionStorage
+		const existingFlags = sessionStorage.getItem("flagReports");
+		const flags = existingFlags ? JSON.parse(existingFlags) : [];
+		flags.push(flagReport);
+		sessionStorage.setItem("flagReports", JSON.stringify(flags));
+
+		// Update scan record with flag status
+		if (currentScanId) {
+			const existingHistory = sessionStorage.getItem("scanHistory");
+			if (existingHistory) {
+				const history: ScanRecord[] = JSON.parse(existingHistory);
+				const scanIndex = history.findIndex((record) => record.id === currentScanId);
+				if (scanIndex !== -1) {
+					history[scanIndex].flagged = true;
+					history[scanIndex].flagReportId = flagReport.id;
+					sessionStorage.setItem("scanHistory", JSON.stringify(history));
+				}
+			}
+		}
+
+		// Update UI state
+		isFlagged = true;
+		isFlagModalOpen = false;
+	}
+
+	function handleFlagCancel() {
+		isFlagModalOpen = false;
 	}
 
 	function scanAgain() {
@@ -348,6 +413,24 @@
 						</div>
 					</div>
 
+					<!-- Flag Diagnosis Button -->
+					{#if !isFlagged}
+						<button
+							onclick={openFlagModal}
+							class="w-full mb-4 px-4 py-3 rounded-2xl font-medium border border-orange-500/20 bg-orange-500/5 text-orange-700 dark:text-orange-400 hover:bg-orange-500/10 transition-all flex items-center justify-center gap-2"
+						>
+							<Flag size={18} />
+							<span>Report Wrong Diagnosis</span>
+						</button>
+					{:else}
+						<div
+							class="w-full mb-4 px-4 py-3 rounded-2xl font-medium border border-green-500/20 bg-green-500/5 text-green-700 dark:text-green-400 flex items-center justify-center gap-2"
+						>
+							<CheckCircle size={18} />
+							<span>Feedback Submitted - Thank You!</span>
+						</div>
+					{/if}
+
 					<!-- Severity Badge and Affected Parts -->
 					<div class="flex flex-wrap gap-2">
 						<span
@@ -459,6 +542,16 @@
 			{/if}
 		{/if}
 	</main>
+
+	<!-- Flag Diagnosis Modal -->
+	{#if diagnosis}
+		<FlagDiagnosisModal
+			bind:isOpen={isFlagModalOpen}
+			predictedDisease={diagnosis.diseaseName}
+			onSubmit={handleFlagSubmit}
+			onCancel={handleFlagCancel}
+		/>
+	{/if}
 </div>
 
 <style>

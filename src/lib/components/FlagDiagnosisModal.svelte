@@ -34,7 +34,8 @@
 	let selectedDisease = $state("");
 	let userNotes = $state("");
 
-	function handleSubmit() {
+	function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
 		if (!selectedDisease) return;
 		onSubmit(selectedDisease, userNotes || undefined);
 		// Reset form
@@ -71,6 +72,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="modal-title"
+		tabindex="-1"
 	>
 		<!-- Backdrop -->
 		<div class="absolute inset-0 bg-background/80 backdrop-blur-sm"></div>
@@ -105,7 +107,7 @@
 				</div>
 
 				<!-- Form -->
-				<form onsubmit|preventDefault={handleSubmit} class="space-y-4">
+				<form id="flag-form" onsubmit={handleSubmit} class="space-y-4">
 					<!-- Correct Disease Dropdown -->
 					<div>
 						<label
@@ -164,7 +166,8 @@
 					Cancel
 				</button>
 				<button
-					onclick={handleSubmit}
+					type="submit"
+					form="flag-form"
 					disabled={!selectedDisease}
 					class="flex-1 px-6 py-3 rounded-2xl font-semibold bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
 				>
