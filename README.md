@@ -1,38 +1,79 @@
-# sv
+<div align="center">
+<img width="125" height="125" src="https://emojicdn.elk.sh/🌸?style=apple"/>
+<h1>Petal - Plant Disease Diagnosis Frontend</h1>
+</div>
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
-
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+```
+[!NOTE] This is the backend application for the senior design project:
+"A07 - Computer Vision System for Plant Disease Diagnosis".
 ```
 
-## Developing
+# Introduction
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Welcome to the frontend for the Plant Disease Diagnosis application! This is a Next.js application built with TypeScript and tested with Jest. It provides the user interface for users to upload images of their plants and receive a diagnosis from our machine learning model.
 
-```sh
-npm run dev
+# Getting Started
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+Follow these steps to get the development environment up and running on your local machine.
+
+1. Clone the repository:
+
 ```
 
-## Building
+git clone <your-repository-url>
 
-To create a production version of your app:
-
-```sh
-npm run build
 ```
 
-You can preview the production build with `npm run preview`.
+2. Navigate to the directory:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```
+
+cd <repository-name>
+
+```
+
+3. Install dependencies: This project uses pnpm as its package manager.
+
+```
+
+pnpm install
+
+```
+
+<!-- 4. Set up environment variables: Copy the example environment file and fill in the required variables.
+
+cp .env.example .env.local
+
+You'll need to set NEXT_PUBLIC_API_BASE_URL to point to your running backend server (e.g., http://127.0.0.1:5000). -->
+
+# Running the Development Server
+
+To run the application locally, use the following command:
+
+```
+
+pnpm dev
+
+```
+
+Open http://localhost:3000 with your browser to see the result.
+
+# Running Tests
+
+To run the unit tests for this project, use the command:
+
+```
+
+pnpm test
+
+```
+
+For interactive watch mode during development, run `pnpm test:watch`.
+
+# Contributing
+
+We welcome contributions from the team! If you would like to contribute to this repository, please read our [Contributing Guide](./CONTRIBUTING.md) for our full workflow and standards.
+
+## 📝 License
+
+This repository is licensed under the [MIT License](./LICENSE).
