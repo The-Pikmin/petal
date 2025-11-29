@@ -10,7 +10,7 @@
 
 # Introduction
 
-Welcome to the frontend for the Plant Disease Diagnosis application! This is a Next.js application built with TypeScript and tested with Jest. It provides the user interface for users to upload images of their plants and receive a diagnosis from our machine learning model.
+Welcome to the frontend for the Plant Disease Diagnosis application! This is a Svelte application built with TypeScript and Capacitor. It provides the user interface for users to upload images of their plants and receive a diagnosis from our machine learning model.
 
 # Getting Started
 
