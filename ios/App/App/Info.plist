@@ -45,6 +45,15 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.greeneye.app</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>GreenEye needs access to your camera to take photos of plants for disease diagnosis.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

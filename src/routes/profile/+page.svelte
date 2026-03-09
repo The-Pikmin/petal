@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { theme } from "$lib/stores/theme.store";
-	import { mockUserProfile } from "$lib/services/mock-data";
 	import type { UserProfile } from "$lib/types";
 	import {
 		User,
@@ -18,10 +17,21 @@
 		Edit,
 	} from "lucide-svelte";
 	import { fade, fly } from "svelte/transition";
+	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
+	import { auth, currentUser } from "$lib/stores/auth.store";
+	import { requireAuth } from "$lib/guards/auth.guard";
 
-	let userProfile = $state<UserProfile>(mockUserProfile);
+	onMount(() => {
+		return requireAuth();
+	});
+
+	function handleSignOut() {
+		auth.logout();
+		goto("/login");
+	}
 
 	function formatJoinDate(timestamp: number): string {
 		return new Date(timestamp).toLocaleDateString("en-US", {
@@ -44,7 +54,7 @@
 				{
 					icon: Bell,
 					label: "Notifications",
-					subtitle: userProfile.settings.notifications.enabled ? "Enabled" : "Disabled",
+					subtitle: "Enabled",
 					action: () => {},
 				},
 				{
@@ -110,14 +120,10 @@
 						<!-- User Info -->
 						<div class="flex-1">
 							<h2 class="text-xl font-bold text-foreground mb-1">
-								{userProfile.name}
+								{$currentUser?.username ?? ""}
 							</h2>
 							<p class="text-sm text-muted-foreground mb-1">
-								{userProfile.email}
-							</p>
-							<p class="text-xs text-muted-foreground flex items-center gap-1">
-								<Calendar size={12} />
-								Joined {formatJoinDate(userProfile.joinedDate)}
+								{$currentUser?.email ?? ""}
 							</p>
 						</div>
 
@@ -210,6 +216,7 @@
 				<!-- Sign Out Button -->
 				<div class="pt-4">
 					<button
+						onclick={handleSignOut}
 						class="w-full px-6 py-4 rounded-3xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-destructive text-white flex items-center justify-center gap-2"
 						in:fly|global={{ y: 20, duration: 400, delay: 700 }}
 					>

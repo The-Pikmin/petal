@@ -1,25 +1,48 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
 	import { ArrowLeft, Mail, Lock, User } from "lucide-svelte";
 	import { theme } from "$lib/stores/theme.store";
+	import { auth } from "$lib/stores/auth.store";
+	import { requireGuest } from "$lib/guards/auth.guard";
 	import logoDark from "$lib/assets/logo-dark.png";
 	import logoLight from "$lib/assets/logo-light.png";
 
-	let name = $state("");
+	let username = $state("");
 	let email = $state("");
 	let password = $state("");
 	let isLoading = $state(false);
+	let errorMessage = $state("");
+
+	onMount(() => {
+		return requireGuest();
+	});
 
 	async function handleSignup(e: Event) {
 		e.preventDefault();
 		isLoading = true;
+		errorMessage = "";
 
-		// Simulate network request
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+		try {
+			await auth.signUpWithEmail(email, password, username);
+			goto("/home");
+		} catch (err: any) {
+			if (!navigator.onLine) {
+				errorMessage = "No internet connection.";
+			} else {
+				errorMessage = err.message || "Registration failed. Please try again.";
+			}
+		} finally {
+			isLoading = false;
+		}
+	}
 
-		// Mock signup success
-		isLoading = false;
-		goto("/home");
+	async function handleGoogleSignup() {
+		try {
+			await auth.loginWithGoogle();
+		} catch (err: any) {
+			errorMessage = err.message || "Google sign-in failed.";
+		}
 	}
 </script>
 
@@ -53,7 +76,7 @@
 				<label
 					for="name"
 					class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-					>Full Name</label
+					>Username</label
 				>
 				<div class="relative">
 					<div class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -62,8 +85,8 @@
 					<input
 						id="name"
 						type="text"
-						bind:value={name}
-						placeholder="John Doe"
+						bind:value={username}
+						placeholder="Choose a username"
 						required
 						class="flex h-12 w-full rounded-xl border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 					/>
@@ -109,7 +132,12 @@
 						class="flex h-12 w-full rounded-xl border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 					/>
 				</div>
+				<p class="text-xs text-muted-foreground">Must be at least 6 characters</p>
 			</div>
+
+			{#if errorMessage}
+				<p class="text-sm text-red-500">{errorMessage}</p>
+			{/if}
 
 			<!-- Sign up button -->
 			<button
@@ -134,6 +162,7 @@
 		<!-- Google Sign-in -->
 		<button
 			type="button"
+			onclick={handleGoogleSignup}
 			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
 		>
 			<svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -155,6 +184,20 @@
 				/>
 			</svg>
 			<span class="font-medium text-foreground">Continue with Google</span>
+		</button>
+
+		<!-- Apple Sign-in -->
+		<button
+			type="button"
+			onclick={() => auth.loginWithApple()}
+			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+		>
+			<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+				<path
+					d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+				/>
+			</svg>
+			<span class="font-medium text-foreground">Continue with Apple</span>
 		</button>
 
 		<!-- Log in link -->

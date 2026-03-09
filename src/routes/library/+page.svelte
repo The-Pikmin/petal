@@ -1,10 +1,16 @@
 <script lang="ts">
+	import { onMount } from "svelte";
 	import { mockDiseaseLibrary } from "$lib/services/mock-data";
 	import type { DiseaseLibraryEntry } from "$lib/types";
 	import { Search, AlertCircle, Droplet, Bug, Leaf } from "lucide-svelte";
 	import { fly, fade } from "svelte/transition";
+	import { requireAuth } from "$lib/guards/auth.guard";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
+
+	onMount(() => {
+		return requireAuth();
+	});
 
 	let searchQuery = $state("");
 	let isSearchOpen = $state(false);

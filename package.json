@@ -52,10 +52,12 @@
 	},
 	"dependencies": {
 		"@capacitor/android": "^7.4.4",
+		"@capacitor/app": "^7.1.2",
 		"@capacitor/cli": "^7.4.4",
 		"@capacitor/core": "^7.4.4",
 		"@capacitor/geolocation": "^7.1.5",
 		"@capacitor/ios": "^7.4.4",
+		"@supabase/supabase-js": "^2.98.0",
 		"lucide-svelte": "^0.554.0"
 	}
 }

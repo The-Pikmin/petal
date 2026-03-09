@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
 	import WebCamera from "$lib/components/WebCamera.svelte";
 	import type { CapturedPhoto } from "$lib/types";
+	import { requireAuth } from "$lib/guards/auth.guard";
+
+	onMount(() => {
+		return requireAuth();
+	});
 
 	function handleCapture(photo: CapturedPhoto) {
 		// Store photo and navigate to scan page

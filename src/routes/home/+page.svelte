@@ -29,6 +29,8 @@
 	import { mockMyPlants, mockDailyTip, mockCommonDiseases } from "$lib/data/mockData";
 	import { mockUserProfile } from "$lib/services/mock-data";
 	import type { ScanRecord } from "$lib/types";
+	import { currentUser } from "$lib/stores/auth.store";
+	import { requireAuth } from "$lib/guards/auth.guard";
 
 	let weather = $state<WeatherData | null>(null);
 	let recentScans = $state<ScanRecord[]>([]);
@@ -39,6 +41,7 @@
 	const diseasesIdentified = tweened(0, { duration: 1000, easing: cubicOut });
 
 	onMount(() => {
+		const authUnsub = requireAuth();
 		// Animate stats only when splash is gone
 		const unsubscribe = isSplashVisible.subscribe((visible) => {
 			if (!visible) {
@@ -76,6 +79,7 @@
 
 		return () => {
 			unsubscribe();
+			authUnsub();
 		};
 	});
 
@@ -186,7 +190,7 @@
 					</button>
 					<div>
 						<p class="text-xs text-muted-foreground">Good morning</p>
-						<h2 class="font-bold text-foreground leading-none">Gardener</h2>
+						<h2 class="font-bold text-foreground leading-none">{$currentUser?.username ?? "Gardener"}</h2>
 					</div>
 				</div>
 

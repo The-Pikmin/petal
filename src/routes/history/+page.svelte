@@ -1,26 +1,23 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { mockScanHistory } from "$lib/services/mock-data";
 	import type { ScanRecord } from "$lib/types";
+	import { requireAuth } from "$lib/guards/auth.guard";
 	import { Clock, CheckCircle, AlertCircle, Camera } from "lucide-svelte";
 	import { fly } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
-	let scanHistory = $state<ScanRecord[]>(mockScanHistory);
+	let scanHistory = $state<ScanRecord[]>([]);
 
 	onMount(() => {
-		// Load scans from session storage and merge with mock data
+		const authUnsub = requireAuth();
+		// Load scans from session storage
 		const storedHistoryData = sessionStorage.getItem("scanHistory");
 		const storedHistory: ScanRecord[] = storedHistoryData ? JSON.parse(storedHistoryData) : [];
 
-		// Merge stored history with mock data, avoiding duplicates
-		scanHistory = [
-			...storedHistory,
-			...mockScanHistory.filter(
-				(mockScan) => !storedHistory.find((s) => s.id === mockScan.id)
-			),
-		];
+		scanHistory = storedHistory;
+
+		return authUnsub;
 	});
 
 	function formatDate(timestamp: number): string {
