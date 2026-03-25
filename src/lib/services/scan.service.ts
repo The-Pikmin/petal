@@ -33,6 +33,7 @@ export async function identifyPlant(photo: CapturedPhoto): Promise<PlantIDResult
     return {
         imageUrl: uploadResponse.url,
         predictions: predictResponse.predictions,
+        disease: predictResponse.disease ?? null,
         timestamp: Date.now(),
     };
 }

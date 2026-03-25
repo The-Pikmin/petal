@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
+import { PUBLIC_API_URL } from '$env/static/public';
 
-const API_URL = import.meta.env.PUBLIC_API_URL || 'https://stamen.onrender.com/api';
+const API_URL = PUBLIC_API_URL || 'https://stamen.onrender.com/api';
 
 interface FetchOptions extends RequestInit {
 	skipAuth?: boolean;

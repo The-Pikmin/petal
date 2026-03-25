@@ -24,14 +24,28 @@ export interface SpeciesPrediction {
 	confidence: number;
 }
 
+export interface DiseasePrediction {
+	name: string;
+	confidence: number;
+}
+
+export interface DiseaseResult {
+	genus: string;
+	disease_name: string;
+	confidence: number;
+	all_diseases: DiseasePrediction[];
+}
+
 export interface PredictResponse {
 	predictions: SpeciesPrediction[];
+	disease: DiseaseResult | null;
 }
 
 // === Combined scan result ===
 export interface PlantIDResult {
 	imageUrl: string;
 	predictions: SpeciesPrediction[];
+	disease: DiseaseResult | null;
 	timestamp: number;
 }
 

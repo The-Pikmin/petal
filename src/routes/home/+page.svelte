@@ -505,14 +505,6 @@
 											<p class="text-xs text-muted-foreground">
 												{new Date(scan.timestamp).toLocaleDateString()}
 											</p>
-											<div class="flex items-center gap-2 mt-1">
-												<span
-													class="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-												>
-													{Math.round(scan.diagnosis.confidence * 100)}%
-													match
-												</span>
-											</div>
 										</div>
 										<button
 											class="p-2 hover:bg-muted rounded-full transition-colors"

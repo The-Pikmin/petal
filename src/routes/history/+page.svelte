@@ -63,17 +63,6 @@
 		}
 	}
 
-	function getConfidenceColor(confidence: number) {
-		if (confidence >= 0.9) return "text-green-600 dark:text-green-400";
-		if (confidence >= 0.75) return "text-yellow-600 dark:text-yellow-400";
-		return "text-orange-600 dark:text-orange-400";
-	}
-
-	function animateWidth(node: HTMLElement, confidence: number) {
-		setTimeout(() => {
-			node.style.width = `${confidence * 100}%`;
-		}, 100);
-	}
 </script>
 
 <svelte:head>
@@ -159,33 +148,6 @@
 									<p class="text-sm font-medium text-foreground mb-2">
 										{scan.diagnosis.diseaseName}
 									</p>
-
-									<!-- Confidence Bar -->
-									<div class="mb-2">
-										<div class="flex items-center justify-between mb-1">
-											<span class="text-xs text-muted-foreground">
-												Confidence
-											</span>
-											<span
-												class="text-xs font-medium {getConfidenceColor(
-													scan.diagnosis.confidence
-												)}"
-											>
-												{Math.round(scan.diagnosis.confidence * 100)}%
-											</span>
-										</div>
-										<div
-											class="w-full h-1.5 bg-muted rounded-full overflow-hidden"
-										>
-											<div
-												class="h-full rounded-full transition-all duration-1000 ease-out {getConfidenceColor(
-													scan.diagnosis.confidence
-												)} bg-current"
-												style="width: 0%"
-												use:animateWidth={scan.diagnosis.confidence}
-											></div>
-										</div>
-									</div>
 
 									<!-- Severity Badge -->
 									<div class="flex items-center gap-2 mt-auto">
