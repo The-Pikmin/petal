@@ -21,6 +21,7 @@ export interface PredictRequest {
 export interface SpeciesPrediction {
 	species_id: string;
 	name: string;
+	common_name: string;
 	confidence: number;
 }
 
@@ -39,6 +40,7 @@ export interface DiseaseResult {
 export interface PredictResponse {
 	predictions: SpeciesPrediction[];
 	disease: DiseaseResult | null;
+	low_confidence: boolean;
 }
 
 // === Combined scan result ===
@@ -46,6 +48,7 @@ export interface PlantIDResult {
 	imageUrl: string;
 	predictions: SpeciesPrediction[];
 	disease: DiseaseResult | null;
+	low_confidence: boolean;
 	timestamp: number;
 }
 
@@ -60,6 +63,47 @@ export interface ScanResultResponse {
 	disease_genus: string;
 	all_diseases: DiseasePrediction[];
 	created_at: string;
+}
+
+// === Disease Library (from Supabase static_diseases table) ===
+export interface DiseaseSymptom {
+	description: string;
+	progression: string;
+}
+
+export interface DiseaseCause {
+	factor: string;
+	detail: string;
+}
+
+export interface DiseaseTreatmentStep {
+	step: number;
+	action: string;
+	detail: string;
+	urgency: "immediate" | "ongoing" | "conditional";
+}
+
+export interface DiseasePreventionTip {
+	tip: string;
+	detail: string;
+}
+
+export interface DiseaseRecommendedActions {
+	disease_name: string;
+	scientific_name: string;
+	affected_plants: string[];
+	symptoms: DiseaseSymptom[];
+	onset_period: string;
+	causes: DiseaseCause[];
+	treatments: DiseaseTreatmentStep[];
+	prevention: DiseasePreventionTip[];
+}
+
+export interface StaticDiseaseResponse {
+	disease_id: number;
+	disease_name: string;
+	genus: string;
+	recommended_actions: DiseaseRecommendedActions;
 }
 
 // === API Error ===

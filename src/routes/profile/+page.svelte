@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { theme } from "$lib/stores/theme.store";
-	import type { UserProfile } from "$lib/types";
 	import {
 		User,
 		Mail,
-		Calendar,
 		Bell,
 		Globe,
 		Shield,
@@ -31,13 +29,6 @@
 	function handleSignOut() {
 		auth.logout();
 		goto("/login");
-	}
-
-	function formatJoinDate(timestamp: number): string {
-		return new Date(timestamp).toLocaleDateString("en-US", {
-			month: "long",
-			year: "numeric",
-		});
 	}
 
 	const settingsSections = [

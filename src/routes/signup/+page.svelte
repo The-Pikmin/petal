@@ -26,11 +26,12 @@
 		try {
 			await auth.signUpWithEmail(email, password, username);
 			goto("/home");
-		} catch (err: any) {
+		} catch (err: unknown) {
 			if (!navigator.onLine) {
 				errorMessage = "No internet connection.";
 			} else {
-				errorMessage = err.message || "Registration failed. Please try again.";
+				errorMessage =
+					err instanceof Error ? err.message : "Registration failed. Please try again.";
 			}
 		} finally {
 			isLoading = false;
@@ -40,8 +41,8 @@
 	async function handleGoogleSignup() {
 		try {
 			await auth.loginWithGoogle();
-		} catch (err: any) {
-			errorMessage = err.message || "Google sign-in failed.";
+		} catch (err: unknown) {
+			errorMessage = err instanceof Error ? err.message : "Google sign-in failed.";
 		}
 	}
 </script>

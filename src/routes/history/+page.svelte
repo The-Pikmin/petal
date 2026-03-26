@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { goto } from "$app/navigation";
 	import type { ScanRecord } from "$lib/types";
 	import { requireAuth } from "$lib/guards/auth.guard";
 	import { fetchScanHistory } from "$lib/services/scan.service";
@@ -66,7 +67,6 @@
 				return "bg-muted text-muted-foreground border-border";
 		}
 	}
-
 </script>
 
 <svelte:head>
@@ -107,6 +107,7 @@
 				<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 					{#each scanHistory as scan, i (scan.id || i)}
 						<button
+							onclick={() => goto("/history/" + scan.id)}
 							class="w-full rounded-3xl p-4 text-left hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
 							in:fly|global={{ y: 20, duration: 400, delay: 200 + i * 50 }}
 						>

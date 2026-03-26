@@ -25,13 +25,14 @@
 		try {
 			await auth.loginWithEmail(email, password);
 			goto("/home");
-		} catch (err: any) {
-			if (err.status === 400) {
+		} catch (err: unknown) {
+			const e = err as { status?: number; message?: string };
+			if (e.status === 400) {
 				errorMessage = "Invalid email or password.";
 			} else if (!navigator.onLine) {
 				errorMessage = "No internet connection.";
 			} else {
-				errorMessage = err.message || "Login failed. Please try again.";
+				errorMessage = e.message || "Login failed. Please try again.";
 			}
 		} finally {
 			isLoading = false;
@@ -41,8 +42,8 @@
 	async function handleGoogleLogin() {
 		try {
 			await auth.loginWithGoogle();
-		} catch (err: any) {
-			errorMessage = err.message || "Google sign-in failed.";
+		} catch (err: unknown) {
+			errorMessage = err instanceof Error ? err.message : "Google sign-in failed.";
 		}
 	}
 </script>
