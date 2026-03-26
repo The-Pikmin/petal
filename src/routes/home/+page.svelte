@@ -14,8 +14,6 @@
 		CloudRain,
 		CloudSun,
 		Snowflake,
-		ChevronLeft,
-		ChevronRight,
 		Camera,
 		AlertCircle,
 	} from "lucide-svelte";
@@ -26,9 +24,11 @@
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
-	import { mockMyPlants, mockDailyTip, mockCommonDiseases } from "$lib/data/mockData";
-	import { mockUserProfile } from "$lib/services/mock-data";
+	import { mockDailyTip } from "$lib/data/mockData";
 	import type { ScanRecord } from "$lib/types";
+	import { currentUser } from "$lib/stores/auth.store";
+	import { requireAuth } from "$lib/guards/auth.guard";
+	import { fetchScanHistory } from "$lib/services/scan.service";
 
 	let weather = $state<WeatherData | null>(null);
 	let recentScans = $state<ScanRecord[]>([]);
@@ -39,13 +39,10 @@
 	const diseasesIdentified = tweened(0, { duration: 1000, easing: cubicOut });
 
 	onMount(() => {
+		const authUnsub = requireAuth();
 		// Animate stats only when splash is gone
 		const unsubscribe = isSplashVisible.subscribe((visible) => {
 			if (!visible) {
-				totalScans.set(mockUserProfile.stats.totalScans);
-				plantsSaved.set(mockUserProfile.stats.plantsSaved);
-				diseasesIdentified.set(mockUserProfile.stats.diseasesIdentified);
-
 				if ($hasLoadedHome) {
 					showContent = true;
 				} else {
@@ -65,10 +62,20 @@
 				console.error("Failed to load weather:", error);
 			}
 
-			// Load recent scans
-			const savedScans = sessionStorage.getItem("scanHistory");
-			if (savedScans) {
-				recentScans = JSON.parse(savedScans);
+			// Load recent scans from backend
+			try {
+				recentScans = await fetchScanHistory();
+				totalScans.set(recentScans.length);
+				plantsSaved.set(new Set(recentScans.map((s) => s.plantName).filter(Boolean)).size);
+				diseasesIdentified.set(
+					new Set(
+						recentScans
+							.map((s) => s.diagnosis.diseaseName)
+							.filter((d) => d && d !== "Healthy Plant" && d !== "Unknown")
+					).size
+				);
+			} catch (err) {
+				console.error("Failed to load recent scans:", err);
 			}
 		};
 
@@ -76,12 +83,9 @@
 
 		return () => {
 			unsubscribe();
+			authUnsub();
 		};
 	});
-
-	function handleScanPlant() {
-		goto("/camera");
-	}
 
 	function getWeatherIcon(condition: string) {
 		// Clear / Sunny
@@ -135,33 +139,6 @@
 
 		return "animate-sun-radiate"; // Default
 	}
-
-	function getHealthColor(status: string) {
-		switch (status) {
-			case "healthy":
-				return "bg-green-500";
-			case "needs-water":
-				return "bg-blue-500";
-			case "warning":
-				return "bg-yellow-500";
-			case "sick":
-				return "bg-red-500";
-			default:
-				return "bg-gray-500";
-		}
-	}
-
-	let myGardenScroll = $state<HTMLElement | null>(null);
-	let diseasesScroll = $state<HTMLElement | null>(null);
-
-	function scroll(element: HTMLElement | null, direction: "left" | "right") {
-		if (!element) return;
-		const scrollAmount = 300;
-		element.scrollBy({
-			left: direction === "left" ? -scrollAmount : scrollAmount,
-			behavior: "smooth",
-		});
-	}
 </script>
 
 <svelte:head>
@@ -186,7 +163,9 @@
 					</button>
 					<div>
 						<p class="text-xs text-muted-foreground">Good morning</p>
-						<h2 class="font-bold text-foreground leading-none">Gardener</h2>
+						<h2 class="font-bold text-foreground leading-none">
+							{$currentUser?.username ?? "Gardener"}
+						</h2>
 					</div>
 				</div>
 
@@ -382,90 +361,6 @@
 
 				<!-- Right Column (Desktop) -->
 				<div class="space-y-8 lg:col-start-2 lg:row-start-1">
-					<!-- My Garden Section -->
-					<section class="relative group/garden">
-						<div
-							class="flex items-center justify-between mb-4"
-							in:fly={{ y: 20, duration: 400, delay: 250 }}
-						>
-							<h2 class="text-xl font-bold text-foreground">My Garden</h2>
-							<button class="text-sm font-medium text-primary hover:underline"
-								>See All</button
-							>
-						</div>
-
-						<!-- Navigation Arrows -->
-						<button
-							onclick={() => scroll(myGardenScroll, "left")}
-							class="absolute left-0 top-1/2 z-10 -translate-y-1/2 -ml-4 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center opacity-0 group-hover/garden:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex"
-							aria-label="Scroll left"
-						>
-							<ChevronLeft size={16} />
-						</button>
-						<button
-							onclick={() => scroll(myGardenScroll, "right")}
-							class="absolute right-0 top-1/2 z-10 -translate-y-1/2 -mr-4 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center opacity-0 group-hover/garden:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex"
-							aria-label="Scroll right"
-						>
-							<ChevronRight size={16} />
-						</button>
-
-						<!-- Horizontal Scroll Container -->
-						<div
-							bind:this={myGardenScroll}
-							class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x scroll-smooth"
-						>
-							<!-- Add Plant Card -->
-							<button
-								onclick={handleScanPlant}
-								class="min-w-[140px] w-[140px] h-[200px] rounded-3xl border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:bg-muted/50 transition-colors snap-start flex-shrink-0"
-								in:fly={{ y: 20, duration: 400, delay: 300 }}
-							>
-								<div
-									class="w-12 h-12 rounded-full bg-muted flex items-center justify-center"
-								>
-									<Search size={24} />
-								</div>
-								<span class="text-sm font-medium">Add Plant</span>
-							</button>
-
-							{#each mockMyPlants as plant, i (plant.id)}
-								<div
-									class="min-w-[160px] w-[160px] h-[200px] rounded-3xl bg-card border border-border p-3 flex flex-col relative snap-start flex-shrink-0 shadow-sm"
-									in:fly|global={{ y: 20, duration: 400, delay: 350 + i * 50 }}
-								>
-									<div
-										class="w-full aspect-square rounded-2xl bg-muted mb-3 overflow-hidden relative"
-									>
-										<img
-											src={plant.image}
-											alt={plant.name}
-											class="w-full h-full object-cover"
-										/>
-										<div
-											class="absolute top-2 right-2 w-3 h-3 rounded-full border-2 border-white {getHealthColor(
-												plant.healthStatus
-											)}"
-										></div>
-									</div>
-									<h3 class="font-semibold text-sm truncate">{plant.name}</h3>
-									<p class="text-xs text-muted-foreground truncate">
-										{plant.species}
-									</p>
-
-									{#if plant.healthStatus === "needs-water"}
-										<div
-											class="mt-auto pt-2 flex items-center gap-1 text-xs text-blue-500 font-medium"
-										>
-											<CloudRain size={12} />
-											<span>Water me!</span>
-										</div>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					</section>
-
 					<!-- Recent Scans Section -->
 					{#if recentScans.length > 0}
 						<section>
@@ -488,11 +383,25 @@
 										<div
 											class="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0"
 										>
-											<img
-												src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
-												alt="Scan"
-												class="w-full h-full object-cover"
-											/>
+											{#if scan.imageUrl}
+												<img
+													src={scan.imageUrl}
+													alt="Scan"
+													class="w-full h-full object-cover"
+												/>
+											{:else if scan.photo.base64}
+												<img
+													src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
+													alt="Scan"
+													class="w-full h-full object-cover"
+												/>
+											{:else}
+												<div
+													class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+												>
+													<Leaf size={24} class="text-primary" />
+												</div>
+											{/if}
 										</div>
 										<div class="flex-1 min-w-0">
 											<h4 class="font-semibold truncate">
@@ -501,16 +410,9 @@
 											<p class="text-xs text-muted-foreground">
 												{new Date(scan.timestamp).toLocaleDateString()}
 											</p>
-											<div class="flex items-center gap-2 mt-1">
-												<span
-													class="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground"
-												>
-													{Math.round(scan.diagnosis.confidence * 100)}%
-													match
-												</span>
-											</div>
 										</div>
 										<button
+											onclick={() => goto("/history/" + scan.id)}
 											class="p-2 hover:bg-muted rounded-full transition-colors"
 										>
 											<Search size={16} class="text-muted-foreground" />
@@ -520,71 +422,6 @@
 							</div>
 						</section>
 					{/if}
-
-					<!-- Common Diseases -->
-					<section class="relative group/diseases">
-						<h2
-							class="text-xl font-bold text-foreground mb-4"
-							in:fly={{ y: 20, duration: 400, delay: 500 }}
-						>
-							Common Diseases
-						</h2>
-
-						<!-- Navigation Arrows -->
-						<button
-							onclick={() => scroll(diseasesScroll, "left")}
-							class="absolute left-0 top-1/2 z-10 -translate-y-1/2 -ml-4 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center opacity-0 group-hover/diseases:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex"
-							aria-label="Scroll left"
-						>
-							<ChevronLeft size={16} />
-						</button>
-						<button
-							onclick={() => scroll(diseasesScroll, "right")}
-							class="absolute right-0 top-1/2 z-10 -translate-y-1/2 -mr-4 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg flex items-center justify-center opacity-0 group-hover/diseases:opacity-100 transition-opacity disabled:opacity-0 hidden lg:flex"
-							aria-label="Scroll right"
-						>
-							<ChevronRight size={16} />
-						</button>
-
-						<div
-							bind:this={diseasesScroll}
-							class="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x scroll-smooth"
-						>
-							{#each mockCommonDiseases as disease, i (disease.id)}
-								<div
-									class="min-w-[240px] rounded-3xl bg-card border border-border overflow-hidden snap-start flex-shrink-0 shadow-sm"
-									in:fly|global={{ y: 20, duration: 400, delay: 500 + i * 50 }}
-								>
-									<div class="h-32 bg-muted relative">
-										<!-- Placeholder for disease image -->
-										<div
-											class="absolute inset-0 flex items-center justify-center text-muted-foreground"
-										>
-											<Leaf size={32} />
-										</div>
-									</div>
-									<div class="p-4">
-										<div class="flex items-start justify-between mb-2">
-											<h3 class="font-bold">{disease.name}</h3>
-											<span
-												class="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-											>
-												{disease.severity}
-											</span>
-										</div>
-										<p class="text-xs text-muted-foreground line-clamp-2 mb-3">
-											{disease.description}
-										</p>
-										<button
-											class="text-xs font-bold text-primary hover:underline"
-										>
-											Learn More
-										</button>
-									</div>
-								</div>
-							{/each}
-						</div>
-					</section>
 				</div>
 			</div>
 		{/if}

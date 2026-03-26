@@ -1,26 +1,28 @@
 <script lang="ts">
 	import { onMount } from "svelte";
-	import { mockScanHistory } from "$lib/services/mock-data";
+	import { goto } from "$app/navigation";
 	import type { ScanRecord } from "$lib/types";
+	import { requireAuth } from "$lib/guards/auth.guard";
+	import { fetchScanHistory } from "$lib/services/scan.service";
 	import { Clock, CheckCircle, AlertCircle, Camera } from "lucide-svelte";
 	import { fly } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
-	let scanHistory = $state<ScanRecord[]>(mockScanHistory);
+	let scanHistory = $state<ScanRecord[]>([]);
 
 	onMount(() => {
-		// Load scans from session storage and merge with mock data
-		const storedHistoryData = sessionStorage.getItem("scanHistory");
-		const storedHistory: ScanRecord[] = storedHistoryData ? JSON.parse(storedHistoryData) : [];
+		const authUnsub = requireAuth();
 
-		// Merge stored history with mock data, avoiding duplicates
-		scanHistory = [
-			...storedHistory,
-			...mockScanHistory.filter(
-				(mockScan) => !storedHistory.find((s) => s.id === mockScan.id)
-			),
-		];
+		fetchScanHistory()
+			.then((scans) => {
+				scanHistory = scans;
+			})
+			.catch((err) => {
+				console.error("Failed to load scan history:", err);
+			});
+
+		return authUnsub;
 	});
 
 	function formatDate(timestamp: number): string {
@@ -65,18 +67,6 @@
 				return "bg-muted text-muted-foreground border-border";
 		}
 	}
-
-	function getConfidenceColor(confidence: number) {
-		if (confidence >= 0.9) return "text-green-600 dark:text-green-400";
-		if (confidence >= 0.75) return "text-yellow-600 dark:text-yellow-400";
-		return "text-orange-600 dark:text-orange-400";
-	}
-
-	function animateWidth(node: HTMLElement, confidence: number) {
-		setTimeout(() => {
-			node.style.width = `${confidence * 100}%`;
-		}, 100);
-	}
 </script>
 
 <svelte:head>
@@ -117,6 +107,7 @@
 				<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 					{#each scanHistory as scan, i (scan.id || i)}
 						<button
+							onclick={() => goto("/history/" + scan.id)}
 							class="w-full rounded-3xl p-4 text-left hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
 							in:fly|global={{ y: 20, duration: 400, delay: 200 + i * 50 }}
 						>
@@ -125,21 +116,29 @@
 								<div
 									class="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0"
 								>
-									<div
-										class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
-									>
-										{#if scan.diagnosis.diseaseName === "Healthy Plant"}
-											<CheckCircle
-												class="text-green-600 dark:text-green-400"
-												size={32}
-											/>
-										{:else}
-											<AlertCircle
-												class="text-orange-600 dark:text-orange-400"
-												size={32}
-											/>
-										{/if}
-									</div>
+									{#if scan.imageUrl}
+										<img
+											src={scan.imageUrl}
+											alt={scan.plantName || "Plant"}
+											class="w-full h-full object-cover"
+										/>
+									{:else}
+										<div
+											class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+										>
+											{#if scan.diagnosis.diseaseName === "Healthy Plant"}
+												<CheckCircle
+													class="text-green-600 dark:text-green-400"
+													size={32}
+												/>
+											{:else}
+												<AlertCircle
+													class="text-orange-600 dark:text-orange-400"
+													size={32}
+												/>
+											{/if}
+										</div>
+									{/if}
 								</div>
 
 								<!-- Scan Info -->
@@ -162,33 +161,6 @@
 									<p class="text-sm font-medium text-foreground mb-2">
 										{scan.diagnosis.diseaseName}
 									</p>
-
-									<!-- Confidence Bar -->
-									<div class="mb-2">
-										<div class="flex items-center justify-between mb-1">
-											<span class="text-xs text-muted-foreground">
-												Confidence
-											</span>
-											<span
-												class="text-xs font-medium {getConfidenceColor(
-													scan.diagnosis.confidence
-												)}"
-											>
-												{Math.round(scan.diagnosis.confidence * 100)}%
-											</span>
-										</div>
-										<div
-											class="w-full h-1.5 bg-muted rounded-full overflow-hidden"
-										>
-											<div
-												class="h-full rounded-full transition-all duration-1000 ease-out {getConfidenceColor(
-													scan.diagnosis.confidence
-												)} bg-current"
-												style="width: 0%"
-												use:animateWidth={scan.diagnosis.confidence}
-											></div>
-										</div>
-									</div>
 
 									<!-- Severity Badge -->
 									<div class="flex items-center gap-2 mt-auto">

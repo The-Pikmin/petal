@@ -1,306 +1,65 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
-	import type {
-		CapturedPhoto,
-		DiagnosisResult,
-		ScanRecord,
-		DiagnosisFlagReport,
-	} from "$lib/types";
-	import {
-		CheckCircle,
-		AlertCircle,
-		Info,
-		Leaf,
-		Droplet,
-		Home,
-		Camera,
-		Save,
-		Flag,
-	} from "lucide-svelte";
-	import FlagDiagnosisModal from "$lib/components/FlagDiagnosisModal.svelte";
+	import type { CapturedPhoto } from "$lib/types";
+	import type { PlantIDResult } from "$lib/types/api.types";
+	import { identifyPlant, saveScan } from "$lib/services/scan.service";
+	import { requireAuth } from "$lib/guards/auth.guard";
+	import { CheckCircle, Home, Camera, Save, AlertCircle, Leaf } from "lucide-svelte";
+	import PlantGrowingLoader from "$lib/components/PlantGrowingLoader.svelte";
 
 	let photo = $state<CapturedPhoto | null>(null);
 	let isAnalyzing = $state(false);
-	let diagnosis = $state<DiagnosisResult | null>(null);
+	let result = $state<PlantIDResult | null>(null);
+	let analysisError = $state<string | null>(null);
 	let isSaved = $state(false);
-	let isFlagModalOpen = $state(false);
-	let isFlagged = $state(false);
-	let currentScanId = $state<string | null>(null);
+
+	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
 
 	onMount(() => {
-		// Get photo data from session storage
+		const unsub = requireAuth();
+
 		const photoData = sessionStorage.getItem("capturedPhoto");
 		if (photoData) {
 			photo = JSON.parse(photoData);
-			// Auto-start analysis
 			setTimeout(() => analyzePlant(), 500);
 		} else {
-			// No photo data, redirect back to camera
 			goto("/camera");
 		}
+
+		return unsub;
 	});
 
 	async function analyzePlant() {
 		if (!photo) return;
-
 		isAnalyzing = true;
+		analysisError = null;
 
-		// Simulate AI analysis delay (2-3 seconds)
-		await new Promise((resolve) => setTimeout(resolve, 2500));
-
-		// Generate mock diagnosis
-		diagnosis = generateMockDiagnosis();
-		isAnalyzing = false;
-	}
-
-	function generateMockDiagnosis(): DiagnosisResult {
-		// Randomly select from different disease scenarios
-		const scenarios = [
-			{
-				diseaseName: "Early Blight",
-				confidence: 0.91,
-				description:
-					"A fungal disease causing dark spots with concentric rings on lower leaves. Common in tomatoes and potatoes.",
-				severity: "medium" as const,
-				treatments: [
-					{
-						name: "Copper Fungicide",
-						description: "Apply copper-based fungicide spray",
-						type: "chemical" as const,
-						steps: [
-							"Remove severely affected leaves",
-							"Mix fungicide according to label instructions",
-							"Spray in early morning or evening",
-							"Repeat every 7-10 days",
-						],
-					},
-					{
-						name: "Cultural Control",
-						description: "Improve growing conditions",
-						type: "cultural" as const,
-						steps: [
-							"Mulch around base of plant",
-							"Water at soil level, avoid wetting leaves",
-							"Ensure good air circulation",
-							"Rotate crops next season",
-						],
-					},
-				],
-				affectedParts: ["leaves", "stems"],
-			},
-			{
-				diseaseName: "Powdery Mildew",
-				confidence: 0.87,
-				description:
-					"A fungal disease appearing as white powdery coating on leaves and stems. Thrives in warm, dry conditions.",
-				severity: "medium" as const,
-				treatments: [
-					{
-						name: "Neem Oil Spray",
-						description: "Organic treatment using neem oil",
-						type: "organic" as const,
-						steps: [
-							"Mix neem oil with water per instructions",
-							"Spray all plant surfaces thoroughly",
-							"Apply weekly until symptoms improve",
-							"Spray in evening to avoid leaf burn",
-						],
-					},
-					{
-						name: "Baking Soda Solution",
-						description: "Homemade fungicide treatment",
-						type: "organic" as const,
-						steps: [
-							"Mix 1 tbsp baking soda per gallon of water",
-							"Add a few drops of liquid soap",
-							"Spray affected areas",
-							"Repeat every 3-5 days",
-						],
-					},
-				],
-				affectedParts: ["leaves", "stems", "flowers"],
-			},
-			{
-				diseaseName: "Healthy Plant",
-				confidence: 0.95,
-				description:
-					"No diseases detected! Your plant appears healthy and well-maintained. Continue current care routine.",
-				severity: "low" as const,
-				treatments: [
-					{
-						name: "Preventive Care",
-						description: "Maintain healthy growing conditions",
-						type: "cultural" as const,
-						steps: [
-							"Continue regular watering schedule",
-							"Monitor for any changes in appearance",
-							"Fertilize as needed for plant type",
-							"Inspect regularly for early signs of issues",
-						],
-					},
-				],
-				affectedParts: [],
-			},
-			{
-				diseaseName: "Aphid Infestation",
-				confidence: 0.89,
-				description:
-					"Small sap-sucking insects detected on plant. Can spread quickly and transmit diseases if left untreated.",
-				severity: "low" as const,
-				treatments: [
-					{
-						name: "Water Spray",
-						description: "Simple mechanical removal",
-						type: "cultural" as const,
-						steps: [
-							"Spray aphids off with strong water stream",
-							"Repeat daily until infestation clears",
-							"Check undersides of leaves",
-							"Monitor for return",
-						],
-					},
-					{
-						name: "Insecticidal Soap",
-						description: "Organic pest control",
-						type: "organic" as const,
-						steps: [
-							"Apply insecticidal soap according to label",
-							"Spray directly on aphids",
-							"Repeat every few days",
-							"Rinse plant after 2-3 hours",
-						],
-					},
-				],
-				affectedParts: ["leaves", "stems", "buds"],
-			},
-		];
-
-		// Randomly select a scenario
-		const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-		return scenario;
+		try {
+			result = await identifyPlant(photo);
+		} catch (err: unknown) {
+			analysisError =
+				err instanceof Error ? err.message : "Failed to identify plant. Please try again.";
+		} finally {
+			isAnalyzing = false;
+		}
 	}
 
 	function getImageSrc(photo: CapturedPhoto): string {
 		return `data:image/${photo.format};base64,${photo.base64}`;
 	}
 
-	function getSeverityColor(severity: string) {
-		switch (severity) {
-			case "low":
-				return "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20";
-			case "medium":
-				return "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20";
-			case "high":
-				return "bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20";
-			case "critical":
-				return "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20";
-			default:
-				return "bg-muted text-muted-foreground border-border";
-		}
-	}
-
-	function getSeverityIcon(severity: string) {
-		switch (severity) {
-			case "low":
-				return CheckCircle;
-			case "medium":
-				return Info;
-			case "high":
-			case "critical":
-				return AlertCircle;
-			default:
-				return Info;
-		}
-	}
-
-	function getConfidenceColor(confidence: number) {
-		if (confidence >= 0.9) return "text-green-600 dark:text-green-400";
-		if (confidence >= 0.75) return "text-yellow-600 dark:text-yellow-400";
-		return "text-orange-600 dark:text-orange-400";
-	}
-
-	function saveToHistory() {
-		if (!photo || !diagnosis) return;
-
-		// In a real app, this would save to a backend
-		// For now, we'll just show a success message
+	async function saveToHistory() {
+		if (!photo || !result) return;
 		isSaved = true;
 
-		// Create scan record
-		const scanId = `scan-${Date.now()}`;
-		const scanRecord: ScanRecord = {
-			id: scanId,
-			photo,
-			diagnosis,
-			timestamp: Date.now(),
-			plantName: "Scanned Plant",
-		};
-
-		// Store current scan ID for flagging
-		currentScanId = scanId;
-
-		// Store in sessionStorage (in real app, would save to backend/database)
-		const existingHistory = sessionStorage.getItem("scanHistory");
-		const history = existingHistory ? JSON.parse(existingHistory) : [];
-		history.unshift(scanRecord);
-		sessionStorage.setItem("scanHistory", JSON.stringify(history));
-
-		// Show success and navigate after delay
-		setTimeout(() => {
-			goto("/history");
-		}, 1500);
-	}
-
-	function openFlagModal() {
-		isFlagModalOpen = true;
-	}
-
-	function handleFlagSubmit(correctDisease: string, userNotes?: string) {
-		if (!diagnosis) return;
-
-		// Create flag report
-		const flagReport: DiagnosisFlagReport = {
-			id: `flag-${Date.now()}`,
-			scanId: currentScanId || `scan-${Date.now()}`,
-			predictedDisease: diagnosis.diseaseName,
-			correctDisease,
-			userNotes,
-			timestamp: Date.now(),
-		};
-
-		// TODO: Replace with actual API endpoint
-		// POST /api/diagnosis-flags
-		// Headers: { Authorization: Bearer ${token} }
-		// Body: DiagnosisFlagReport
-
-		// Store flag report in sessionStorage
-		const existingFlags = sessionStorage.getItem("flagReports");
-		const flags = existingFlags ? JSON.parse(existingFlags) : [];
-		flags.push(flagReport);
-		sessionStorage.setItem("flagReports", JSON.stringify(flags));
-
-		// Update scan record with flag status
-		if (currentScanId) {
-			const existingHistory = sessionStorage.getItem("scanHistory");
-			if (existingHistory) {
-				const history: ScanRecord[] = JSON.parse(existingHistory);
-				const scanIndex = history.findIndex((record) => record.id === currentScanId);
-				if (scanIndex !== -1) {
-					history[scanIndex].flagged = true;
-					history[scanIndex].flagReportId = flagReport.id;
-					sessionStorage.setItem("scanHistory", JSON.stringify(history));
-				}
-			}
+		try {
+			await saveScan(result);
+		} catch (err) {
+			console.error("Failed to save scan:", err);
 		}
 
-		// Update UI state
-		isFlagged = true;
-		isFlagModalOpen = false;
-	}
-
-	function handleFlagCancel() {
-		isFlagModalOpen = false;
+		setTimeout(() => goto("/history"), 1500);
 	}
 
 	function scanAgain() {
@@ -327,14 +86,14 @@
 			</button>
 			<h1 class="text-xl font-bold text-foreground">Scan Results</h1>
 			<div class="w-16"></div>
-			<!-- Spacer for centering -->
 		</div>
 	</header>
 
-	<!-- Main Content -->
-	<main class="px-6 py-6 space-y-6">
-		{#if photo}
-			<!-- Image Card -->
+	<main class="px-6 py-6 space-y-6 max-w-lg mx-auto">
+		{#if isAnalyzing}
+			<PlantGrowingLoader />
+		{:else if photo}
+			<!-- Photo Card -->
 			<div
 				class="rounded-3xl overflow-hidden bg-card text-card-foreground shadow-sm border border-border"
 			>
@@ -344,175 +103,150 @@
 						alt="Captured plant"
 						class="w-full h-full object-cover"
 					/>
-					{#if isAnalyzing}
-						<div
-							class="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center"
-						>
-							<div class="text-center">
-								<div
-									class="w-16 h-16 mx-auto mb-4 border-4 border-primary border-t-transparent rounded-full animate-spin"
-								></div>
-								<p class="text-lg font-semibold">Analyzing your plant...</p>
-								<p class="text-sm text-muted-foreground mt-1">
-									This may take a few moments
-								</p>
-							</div>
-						</div>
-					{/if}
 				</div>
 			</div>
 
-			<!-- Results -->
-			{#if diagnosis && !isAnalyzing}
-				<!-- Diagnosis Card -->
-				<div
-					class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
-				>
-					<!-- Disease Header -->
-					<div class="flex items-start justify-between mb-4">
-						<div class="flex-1">
-							<h2 class="text-2xl font-bold text-foreground mb-2">
-								{diagnosis.diseaseName}
-							</h2>
-							<p class="text-sm text-muted-foreground">
-								{diagnosis.description}
-							</p>
-						</div>
-						{#if diagnosis.severity}
-							{@const Icon = getSeverityIcon(diagnosis.severity)}
-							<Icon
-								size={28}
-								class={diagnosis.severity === "low"
-									? "text-green-600 dark:text-green-400"
-									: diagnosis.severity === "medium"
-										? "text-yellow-600 dark:text-yellow-400"
-										: "text-orange-600 dark:text-orange-400"}
-							/>
-						{/if}
+			<!-- Error State -->
+			{#if analysisError}
+				<div class="rounded-3xl p-6 bg-card border border-border shadow-sm">
+					<div class="flex items-center gap-3 mb-3">
+						<AlertCircle size={24} class="text-red-500 flex-shrink-0" />
+						<h2 class="text-lg font-bold text-foreground">Identification Failed</h2>
 					</div>
-
-					<!-- Confidence Score -->
-					<div class="mb-4">
-						<div class="flex items-center justify-between mb-2">
-							<span class="text-sm font-medium text-muted-foreground">
-								Confidence Score
-							</span>
-							<span
-								class="text-sm font-bold {getConfidenceColor(diagnosis.confidence)}"
-							>
-								{Math.round(diagnosis.confidence * 100)}%
-							</span>
-						</div>
-						<div class="w-full h-2 bg-muted rounded-full overflow-hidden">
-							<div
-								class="h-full rounded-full transition-all {getConfidenceColor(
-									diagnosis.confidence
-								)} bg-current"
-								style="width: {diagnosis.confidence * 100}%"
-							></div>
-						</div>
-					</div>
-
-					<!-- Flag Diagnosis Button -->
-					{#if !isFlagged}
-						<button
-							onclick={openFlagModal}
-							class="w-full mb-4 px-4 py-3 rounded-2xl font-medium border border-orange-500/20 bg-orange-500/5 text-orange-700 dark:text-orange-400 hover:bg-orange-500/10 transition-all flex items-center justify-center gap-2"
-						>
-							<Flag size={18} />
-							<span>Report Wrong Diagnosis</span>
-						</button>
-					{:else}
-						<div
-							class="w-full mb-4 px-4 py-3 rounded-2xl font-medium border border-green-500/20 bg-green-500/5 text-green-700 dark:text-green-400 flex items-center justify-center gap-2"
-						>
-							<CheckCircle size={18} />
-							<span>Feedback Submitted - Thank You!</span>
-						</div>
-					{/if}
-
-					<!-- Severity Badge and Affected Parts -->
-					<div class="flex flex-wrap gap-2">
-						<span
-							class="px-3 py-1.5 rounded-full text-sm font-medium border {getSeverityColor(
-								diagnosis.severity
-							)}"
-						>
-							{diagnosis.severity.charAt(0).toUpperCase() +
-								diagnosis.severity.slice(1)} Severity
-						</span>
-						{#if diagnosis.affectedParts && diagnosis.affectedParts.length > 0}
-							<span
-								class="px-3 py-1.5 rounded-full text-sm font-medium bg-muted text-muted-foreground"
-							>
-								Affects: {diagnosis.affectedParts.join(", ")}
-							</span>
-						{/if}
-					</div>
-				</div>
-
-				<!-- Treatments Card -->
-				{#if diagnosis.treatments && diagnosis.treatments.length > 0}
-					<div
-						class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+					<p class="text-sm text-muted-foreground mb-4">{analysisError}</p>
+					<button
+						onclick={analyzePlant}
+						class="w-full px-4 py-3 rounded-2xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
 					>
-						<h3 class="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-							<Droplet size={20} class="text-primary" />
-							<span>Recommended Treatments</span>
-						</h3>
+						Try Again
+					</button>
+				</div>
+			{/if}
 
-						<div class="space-y-4">
-							{#each diagnosis.treatments as treatment}
-								<div class="rounded-2xl p-4 bg-secondary/50 border border-border">
-									<div class="flex items-start gap-3 mb-3">
-										<div
-											class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0"
-										>
-											<Leaf size={20} class="text-primary" />
-										</div>
-										<div class="flex-1">
-											<h4 class="font-semibold text-foreground">
-												{treatment.name}
-											</h4>
-											<p class="text-sm text-muted-foreground">
-												{treatment.description}
-											</p>
-											<span
-												class="inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
-											>
-												{treatment.type.charAt(0).toUpperCase() +
-													treatment.type.slice(1)}
-											</span>
-										</div>
-									</div>
-
-									<!-- Steps -->
-									<div class="pl-13">
-										<p class="text-sm font-medium text-foreground mb-2">
-											Steps:
-										</p>
-										<ol class="space-y-1.5">
-											{#each treatment.steps as step, index}
-												<li
-													class="text-sm text-muted-foreground flex gap-2"
-												>
-													<span class="font-medium text-primary"
-														>{index + 1}.</span
-													>
-													<span>{step}</span>
-												</li>
-											{/each}
-										</ol>
-									</div>
-								</div>
-							{/each}
+			<!-- Results -->
+			{#if result}
+				{#if result.low_confidence}
+					<div class="rounded-3xl p-5 bg-amber-500/10 border border-amber-500/20">
+						<div class="flex items-center gap-3">
+							<AlertCircle
+								size={24}
+								class="text-amber-600 dark:text-amber-400 flex-shrink-0"
+							/>
+							<div>
+								<p class="font-semibold text-foreground">Low Confidence Result</p>
+								<p class="text-sm text-muted-foreground">
+									We're not confident in this identification. The image may not
+									contain a recognizable plant. Try taking a clearer photo.
+								</p>
+							</div>
 						</div>
 					</div>
 				{/if}
 
+				<div
+					class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+				>
+					<div class="flex items-center gap-2 mb-4">
+						<Leaf size={20} class="text-primary" />
+						<span
+							class="text-sm font-medium text-muted-foreground uppercase tracking-wide"
+							>Results</span
+						>
+					</div>
+
+					<div class="space-y-4">
+						{#each top3 as prediction, i}
+							<div class="flex items-center gap-3">
+								<span
+									class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 {i ===
+									0
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground'}"
+								>
+									{i + 1}
+								</span>
+								<span
+									class="text-foreground italic {i === 0
+										? 'text-lg font-bold'
+										: 'text-sm'}"
+								>
+									{prediction.name}
+								</span>
+							</div>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Disease Analysis -->
+				<div
+					class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+				>
+					<div class="flex items-center gap-2 mb-4">
+						<AlertCircle size={20} class="text-primary" />
+						<span
+							class="text-sm font-medium text-muted-foreground uppercase tracking-wide"
+							>Disease Analysis</span
+						>
+					</div>
+
+					{#if result.disease === null}
+						<p class="text-sm text-muted-foreground">
+							Disease detection not available for this species.
+						</p>
+					{:else if result.disease.disease_name === "Healthy"}
+						<div class="flex items-center gap-3">
+							<CheckCircle size={24} class="text-green-500 flex-shrink-0" />
+							<div>
+								<p class="text-lg font-bold text-foreground">Healthy Plant</p>
+								<p class="text-sm text-muted-foreground">
+									No disease detected in <span class="italic"
+										>{result.disease.genus}</span
+									>
+								</p>
+							</div>
+						</div>
+					{:else}
+						<div class="space-y-4">
+							<div class="flex items-center gap-3">
+								<AlertCircle size={24} class="text-orange-500 flex-shrink-0" />
+								<div>
+									<p class="text-lg font-bold text-foreground">
+										{result.disease.disease_name.replaceAll("_", " ")}
+									</p>
+									<p class="text-sm text-muted-foreground">
+										Detected in <span class="italic"
+											>{result.disease.genus}</span
+										>
+										&mdash; {Math.round(result.disease.confidence * 100)}%
+										confidence
+									</p>
+								</div>
+							</div>
+
+							<div class="space-y-2">
+								{#each result.disease.all_diseases as d}
+									<div class="flex items-center justify-between text-sm">
+										<span class="text-foreground"
+											>{d.name.replaceAll("_", " ")}</span
+										>
+										<span class="text-muted-foreground font-medium"
+											>{Math.round(d.confidence * 100)}%</span
+										>
+									</div>
+									<div class="w-full bg-muted rounded-full h-1.5">
+										<div
+											class="bg-primary rounded-full h-1.5"
+											style="width: {Math.round(d.confidence * 100)}%"
+										></div>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				</div>
+
 				<!-- Action Buttons -->
 				<div class="space-y-3">
-					<!-- Save Button -->
 					{#if !isSaved}
 						<button
 							onclick={saveToHistory}
@@ -526,11 +260,10 @@
 							class="w-full px-6 py-4 rounded-3xl font-semibold bg-green-600 text-white flex items-center justify-center gap-2"
 						>
 							<CheckCircle size={20} />
-							<span>Saved to History!</span>
+							<span>Saved!</span>
 						</div>
 					{/if}
 
-					<!-- Scan Again Button -->
 					<button
 						onclick={scanAgain}
 						class="w-full px-6 py-4 rounded-3xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border border-border bg-card text-card-foreground hover:bg-muted flex items-center justify-center gap-2"
@@ -542,32 +275,4 @@
 			{/if}
 		{/if}
 	</main>
-
-	<!-- Flag Diagnosis Modal -->
-	{#if diagnosis}
-		<FlagDiagnosisModal
-			bind:isOpen={isFlagModalOpen}
-			predictedDisease={diagnosis.diseaseName}
-			onSubmit={handleFlagSubmit}
-			onCancel={handleFlagCancel}
-		/>
-	{/if}
 </div>
-
-<style>
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
-	.animate-spin {
-		animation: spin 1s linear infinite;
-	}
-
-	button {
-		transition:
-			transform 0.2s ease,
-			background-color 0.3s ease;
-	}
-</style>

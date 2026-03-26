@@ -1,24 +1,50 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
 	import { ArrowLeft, Mail, Lock } from "lucide-svelte";
 	import { theme } from "$lib/stores/theme.store";
+	import { auth } from "$lib/stores/auth.store";
+	import { requireGuest } from "$lib/guards/auth.guard";
 	import logoDark from "$lib/assets/logo-dark.png";
 	import logoLight from "$lib/assets/logo-light.png";
 
 	let email = $state("");
 	let password = $state("");
 	let isLoading = $state(false);
+	let errorMessage = $state("");
+
+	onMount(() => {
+		return requireGuest();
+	});
 
 	async function handleLogin(e: Event) {
 		e.preventDefault();
 		isLoading = true;
+		errorMessage = "";
 
-		// Simulate network request
-		await new Promise((resolve) => setTimeout(resolve, 1000));
+		try {
+			await auth.loginWithEmail(email, password);
+			goto("/home");
+		} catch (err: unknown) {
+			const e = err as { status?: number; message?: string };
+			if (e.status === 400) {
+				errorMessage = "Invalid email or password.";
+			} else if (!navigator.onLine) {
+				errorMessage = "No internet connection.";
+			} else {
+				errorMessage = e.message || "Login failed. Please try again.";
+			}
+		} finally {
+			isLoading = false;
+		}
+	}
 
-		// Mock login success
-		isLoading = false;
-		goto("/home");
+	async function handleGoogleLogin() {
+		try {
+			await auth.loginWithGoogle();
+		} catch (err: unknown) {
+			errorMessage = err instanceof Error ? err.message : "Google sign-in failed.";
+		}
 	}
 </script>
 
@@ -94,6 +120,10 @@
 				</div>
 			</div>
 
+			{#if errorMessage}
+				<p class="text-sm text-red-500">{errorMessage}</p>
+			{/if}
+
 			<!-- Login button -->
 			<button
 				type="submit"
@@ -117,6 +147,7 @@
 		<!-- Google Sign-in -->
 		<button
 			type="button"
+			onclick={handleGoogleLogin}
 			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
 		>
 			<svg class="w-5 h-5" viewBox="0 0 24 24">
@@ -138,6 +169,20 @@
 				/>
 			</svg>
 			<span class="font-medium text-foreground">Continue with Google</span>
+		</button>
+
+		<!-- Apple Sign-in -->
+		<button
+			type="button"
+			onclick={() => auth.loginWithApple()}
+			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+		>
+			<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+				<path
+					d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"
+				/>
+			</svg>
+			<span class="font-medium text-foreground">Continue with Apple</span>
 		</button>
 
 		<!-- Footer -->

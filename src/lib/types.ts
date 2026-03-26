@@ -56,6 +56,8 @@ export interface ScanRecord {
 	timestamp: number;
 	/** Plant name (if identified) */
 	plantName?: string;
+	/** Image URL from backend storage */
+	imageUrl?: string;
 	/** User notes */
 	notes?: string;
 	/** Whether this diagnosis has been flagged as incorrect */
