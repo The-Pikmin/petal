@@ -49,6 +49,19 @@ export interface PlantIDResult {
 	timestamp: number;
 }
 
+// === Scan Result (from backend) ===
+export interface ScanResultResponse {
+	id: number;
+	image_url: string;
+	plant_name: string;
+	top_predictions: SpeciesPrediction[];
+	disease_name: string;
+	disease_confidence: number | null;
+	disease_genus: string;
+	all_diseases: DiseasePrediction[];
+	created_at: string;
+}
+
 // === API Error ===
 export interface ApiError {
 	error?: string;

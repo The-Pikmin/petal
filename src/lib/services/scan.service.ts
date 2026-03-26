@@ -1,6 +1,6 @@
 import { apiFetch } from '$lib/services/api';
-import type { ImageUploadResponse, PredictResponse, PlantIDResult } from '$lib/types/api.types';
-import type { CapturedPhoto } from '$lib/types';
+import type { ImageUploadResponse, PredictResponse, PlantIDResult, ScanResultResponse } from '$lib/types/api.types';
+import type { CapturedPhoto, ScanRecord } from '$lib/types';
 
 function base64ToFile(photo: CapturedPhoto): File {
     const byteString = atob(photo.base64);
@@ -36,4 +36,64 @@ export async function identifyPlant(photo: CapturedPhoto): Promise<PlantIDResult
         disease: predictResponse.disease ?? null,
         timestamp: Date.now(),
     };
+}
+
+export async function saveScan(result: PlantIDResult): Promise<void> {
+    const topPrediction = result.predictions[0];
+    await apiFetch('/scans/', {
+        method: 'POST',
+        body: JSON.stringify({
+            image_url: result.imageUrl,
+            plant_name: topPrediction?.name ?? 'Unknown',
+            top_predictions: result.predictions,
+            disease_name: result.disease?.disease_name ?? '',
+            disease_confidence: result.disease?.confidence ?? null,
+            disease_genus: result.disease?.genus ?? '',
+            all_diseases: result.disease?.all_diseases ?? [],
+        }),
+    });
+}
+
+function mapResponseToScanRecord(r: ScanResultResponse): ScanRecord {
+    let diseaseName: string;
+    let description: string;
+    if (!r.disease_name) {
+        diseaseName = 'Unknown';
+        description = 'No disease detected';
+    } else if (r.disease_name === 'Healthy') {
+        diseaseName = 'Healthy Plant';
+        description = 'No disease detected';
+    } else {
+        diseaseName = r.disease_name.replaceAll('_', ' ');
+        description = r.disease_genus
+            ? `Detected in ${r.disease_genus}`
+            : 'Disease detected';
+    }
+
+    const confidence = r.disease_confidence ?? 0;
+    let severity: 'low' | 'medium' | 'high';
+    if (confidence >= 0.8) severity = 'high';
+    else if (confidence >= 0.5) severity = 'medium';
+    else severity = 'low';
+
+    return {
+        id: String(r.id),
+        photo: { base64: '', format: 'jpeg', timestamp: new Date(r.created_at).getTime() },
+        diagnosis: {
+            diseaseName,
+            confidence,
+            description,
+            severity,
+            treatments: [],
+            affectedParts: [],
+        },
+        plantName: r.plant_name,
+        timestamp: new Date(r.created_at).getTime(),
+        imageUrl: r.image_url,
+    };
+}
+
+export async function fetchScanHistory(): Promise<ScanRecord[]> {
+    const data = await apiFetch<ScanResultResponse[]>('/scans/list/');
+    return data.map(mapResponseToScanRecord);
 }
