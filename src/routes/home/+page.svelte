@@ -31,6 +31,7 @@
 	import type { ScanRecord } from "$lib/types";
 	import { currentUser } from "$lib/stores/auth.store";
 	import { requireAuth } from "$lib/guards/auth.guard";
+	import { fetchScanHistory } from "$lib/services/scan.service";
 
 	let weather = $state<WeatherData | null>(null);
 	let recentScans = $state<ScanRecord[]>([]);
@@ -68,10 +69,11 @@
 				console.error("Failed to load weather:", error);
 			}
 
-			// Load recent scans
-			const savedScans = sessionStorage.getItem("scanHistory");
-			if (savedScans) {
-				recentScans = JSON.parse(savedScans);
+			// Load recent scans from backend
+			try {
+				recentScans = await fetchScanHistory();
+			} catch (err) {
+				console.error("Failed to load recent scans:", err);
 			}
 		};
 
@@ -492,11 +494,23 @@
 										<div
 											class="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0"
 										>
-											<img
-												src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
-												alt="Scan"
-												class="w-full h-full object-cover"
-											/>
+											{#if scan.imageUrl}
+												<img
+													src={scan.imageUrl}
+													alt="Scan"
+													class="w-full h-full object-cover"
+												/>
+											{:else if scan.photo.base64}
+												<img
+													src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
+													alt="Scan"
+													class="w-full h-full object-cover"
+												/>
+											{:else}
+												<div class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+													<Leaf size={24} class="text-primary" />
+												</div>
+											{/if}
 										</div>
 										<div class="flex-1 min-w-0">
 											<h4 class="font-semibold truncate">

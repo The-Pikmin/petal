@@ -2,6 +2,7 @@
 	import { onMount } from "svelte";
 	import type { ScanRecord } from "$lib/types";
 	import { requireAuth } from "$lib/guards/auth.guard";
+	import { fetchScanHistory } from "$lib/services/scan.service";
 	import { Clock, CheckCircle, AlertCircle, Camera } from "lucide-svelte";
 	import { fly } from "svelte/transition";
 
@@ -11,11 +12,14 @@
 
 	onMount(() => {
 		const authUnsub = requireAuth();
-		// Load scans from session storage
-		const storedHistoryData = sessionStorage.getItem("scanHistory");
-		const storedHistory: ScanRecord[] = storedHistoryData ? JSON.parse(storedHistoryData) : [];
 
-		scanHistory = storedHistory;
+		fetchScanHistory()
+			.then((scans) => {
+				scanHistory = scans;
+			})
+			.catch((err) => {
+				console.error("Failed to load scan history:", err);
+			});
 
 		return authUnsub;
 	});
@@ -111,21 +115,29 @@
 								<div
 									class="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0"
 								>
-									<div
-										class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
-									>
-										{#if scan.diagnosis.diseaseName === "Healthy Plant"}
-											<CheckCircle
-												class="text-green-600 dark:text-green-400"
-												size={32}
-											/>
-										{:else}
-											<AlertCircle
-												class="text-orange-600 dark:text-orange-400"
-												size={32}
-											/>
-										{/if}
-									</div>
+									{#if scan.imageUrl}
+										<img
+											src={scan.imageUrl}
+											alt={scan.plantName || "Plant"}
+											class="w-full h-full object-cover"
+										/>
+									{:else}
+										<div
+											class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+										>
+											{#if scan.diagnosis.diseaseName === "Healthy Plant"}
+												<CheckCircle
+													class="text-green-600 dark:text-green-400"
+													size={32}
+												/>
+											{:else}
+												<AlertCircle
+													class="text-orange-600 dark:text-orange-400"
+													size={32}
+												/>
+											{/if}
+										</div>
+									{/if}
 								</div>
 
 								<!-- Scan Info -->

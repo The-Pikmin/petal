@@ -3,9 +3,10 @@
 	import { goto } from "$app/navigation";
 	import type { CapturedPhoto } from "$lib/types";
 	import type { PlantIDResult, DiseaseResult } from "$lib/types/api.types";
-	import { identifyPlant } from "$lib/services/scan.service";
+	import { identifyPlant, saveScan } from "$lib/services/scan.service";
 	import { requireAuth } from "$lib/guards/auth.guard";
 	import { CheckCircle, Home, Camera, Save, AlertCircle, Leaf } from "lucide-svelte";
+	import PlantGrowingLoader from "$lib/components/PlantGrowingLoader.svelte";
 
 	let photo = $state<CapturedPhoto | null>(null);
 	let isAnalyzing = $state(false);
@@ -47,21 +48,15 @@
 		return `data:image/${photo.format};base64,${photo.base64}`;
 	}
 
-	function saveToHistory() {
+	async function saveToHistory() {
 		if (!photo || !result) return;
 		isSaved = true;
 
-		const record = {
-			id: `scan-${Date.now()}`,
-			photo,
-			result,
-			timestamp: Date.now(),
-		};
-
-		const existing = sessionStorage.getItem("scanHistory");
-		const history = existing ? JSON.parse(existing) : [];
-		history.unshift(record);
-		sessionStorage.setItem("scanHistory", JSON.stringify(history));
+		try {
+			await saveScan(result);
+		} catch (err) {
+			console.error("Failed to save scan:", err);
+		}
 
 		setTimeout(() => goto("/history"), 1500);
 	}
@@ -94,7 +89,9 @@
 	</header>
 
 	<main class="px-6 py-6 space-y-6 max-w-lg mx-auto">
-		{#if photo}
+		{#if isAnalyzing}
+			<PlantGrowingLoader />
+		{:else if photo}
 			<!-- Photo Card -->
 			<div class="rounded-3xl overflow-hidden bg-card text-card-foreground shadow-sm border border-border">
 				<div class="aspect-square bg-muted relative">
@@ -103,15 +100,6 @@
 						alt="Captured plant"
 						class="w-full h-full object-cover"
 					/>
-					{#if isAnalyzing}
-						<div class="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-							<div class="text-center">
-								<div class="w-16 h-16 mx-auto mb-4 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-								<p class="text-lg font-semibold">Identifying plant...</p>
-								<p class="text-sm text-muted-foreground mt-1">This may take a few moments</p>
-							</div>
-						</div>
-					{/if}
 				</div>
 			</div>
 
@@ -133,7 +121,7 @@
 			{/if}
 
 			<!-- Results -->
-			{#if result && !isAnalyzing}
+			{#if result}
 				<div class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border">
 					<div class="flex items-center gap-2 mb-4">
 						<Leaf size={20} class="text-primary" />
@@ -229,14 +217,3 @@
 	</main>
 </div>
 
-<style>
-	.animate-spin {
-		animation: spin 1s linear infinite;
-	}
-
-	@keyframes spin {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-</style>
