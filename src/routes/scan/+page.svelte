@@ -2,8 +2,8 @@
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 	import type { CapturedPhoto } from "$lib/types";
-	import type { PlantIDResult } from "$lib/types/api.types";
-	import { identifyPlant, saveScan } from "$lib/services/scan.service";
+	import type { PlantIDResult, StaticDiseaseResponse } from "$lib/types/api.types";
+	import { fetchDiseaseInfo, identifyPlant, saveScan } from "$lib/services/scan.service";
 	import { requireAuth } from "$lib/guards/auth.guard";
 	import {
 		CheckCircle,
@@ -13,6 +13,8 @@
 		AlertCircle,
 		Leaf,
 		LoaderCircle,
+		ShieldCheck,
+		Lightbulb,
 	} from "lucide-svelte";
 	import { fade, fly } from "svelte/transition";
 	import PlantGrowingLoader from "$lib/components/PlantGrowingLoader.svelte";
@@ -20,11 +22,19 @@
 	let photo = $state<CapturedPhoto | null>(null);
 	let isAnalyzing = $state(false);
 	let result = $state<PlantIDResult | null>(null);
+	let diseaseInfo = $state<StaticDiseaseResponse | null>(null);
 	let analysisError = $state<string | null>(null);
 	let isSaved = $state(false);
 	let isSaving = $state(false);
 
 	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
+	const recommendedActions = $derived.by(() => {
+		if (!diseaseInfo?.recommended_actions) return null;
+
+		return typeof diseaseInfo.recommended_actions === "string"
+			? JSON.parse(diseaseInfo.recommended_actions)
+			: diseaseInfo.recommended_actions;
+	});
 
 	function getPrimaryPlantLabel(name: string, commonName?: string): string {
 		return commonName?.trim() || name;
@@ -52,9 +62,24 @@
 		if (!photo) return;
 		isAnalyzing = true;
 		analysisError = null;
+		diseaseInfo = null;
 
 		try {
 			result = await identifyPlant(photo);
+			if (
+				result.disease?.disease_name &&
+				result.disease.disease_name !== "Healthy" &&
+				result.disease.genus
+			) {
+				try {
+					diseaseInfo = await fetchDiseaseInfo(
+						result.disease.genus,
+						result.disease.disease_name
+					);
+				} catch {
+					// Care info is optional, so keep showing scan results.
+				}
+			}
 		} catch (err: unknown) {
 			analysisError =
 				err instanceof Error ? err.message : "Failed to identify plant. Please try again.";
@@ -89,6 +114,7 @@
 		sessionStorage.removeItem("capturedPhoto");
 		photo = null;
 		result = null;
+		diseaseInfo = null;
 		analysisError = null;
 		isSaved = false;
 		goto("/camera");
@@ -292,6 +318,64 @@
 						</div>
 					{/if}
 				</div>
+
+				{#if recommendedActions?.treatments?.length}
+					<div
+						class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+					>
+						<div class="flex items-center gap-2 mb-4">
+							<ShieldCheck size={20} class="text-primary" />
+							<span
+								class="text-sm font-medium text-muted-foreground uppercase tracking-wide"
+								>Treatment Steps</span
+							>
+						</div>
+						<div class="space-y-4">
+							{#each recommendedActions.treatments as treatment}
+								<div class="flex gap-3">
+									<span
+										class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 bg-primary text-primary-foreground"
+									>
+										{treatment.step}
+									</span>
+									<div class="flex-1">
+										<p class="text-sm font-medium text-foreground">
+											{treatment.action}
+										</p>
+										<p class="text-xs text-muted-foreground mt-1">
+											{treatment.detail}
+										</p>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+
+				{#if recommendedActions?.prevention?.length}
+					<div
+						class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+					>
+						<div class="flex items-center gap-2 mb-4">
+							<Lightbulb size={20} class="text-primary" />
+							<span
+								class="text-sm font-medium text-muted-foreground uppercase tracking-wide"
+								>Prevention</span
+							>
+						</div>
+						<div class="space-y-4">
+							{#each recommendedActions.prevention as tip, i}
+								<div>
+									<p class="text-sm font-medium text-foreground">{tip.tip}</p>
+									<p class="text-xs text-muted-foreground mt-1">{tip.detail}</p>
+								</div>
+								{#if i < recommendedActions.prevention.length - 1}
+									<hr class="border-border" />
+								{/if}
+							{/each}
+						</div>
+					</div>
+				{/if}
 
 				<!-- Action Buttons -->
 				<div class="space-y-3">
