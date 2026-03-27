@@ -7,21 +7,22 @@
 	import logoDark from "$lib/assets/logo-dark.png";
 	import logoLight from "$lib/assets/logo-light.png";
 
-	import { hasSeenOnboarding } from "$lib/stores/onboarding.store";
 	import { auth, authInitialized } from "$lib/stores/auth.store";
+	import { hasSeenOnboarding } from "$lib/stores/onboarding.store";
+	import { Capacitor } from "@capacitor/core";
 
 	let isMenuOpen = $state(false);
+	const isNative = Capacitor.isNativePlatform();
 
-	// Redirect logged-in users: onboarding on native, /home on web
+	// Native: never show hero page — redirect to login or onboarding
+	// Web: redirect logged-in users to /home
 	$effect(() => {
-		if ($authInitialized && $auth.session) {
-			import("@capacitor/core").then(({ Capacitor }) => {
-				if (Capacitor.isNativePlatform()) {
-					goto("/onboarding");
-				} else {
-					goto("/home");
-				}
-			});
+		if (!$authInitialized) return;
+
+		if (isNative) {
+			goto($auth.session ? ($hasSeenOnboarding ? "/home" : "/onboarding") : "/login");
+		} else if ($auth.session) {
+			goto("/home");
 		}
 	});
 

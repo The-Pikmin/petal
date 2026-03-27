@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
 	import { hasSeenOnboarding } from "$lib/stores/onboarding.store";
+	import { requireAuth } from "$lib/guards/auth.guard";
 	import { Camera, Search, Droplet } from "lucide-svelte";
 
 	const content = [
@@ -30,6 +32,16 @@
 	let step = $state(0);
 	let scrollContainer: HTMLDivElement;
 	let isExiting = $state(false);
+
+	onMount(() => {
+		const unsubscribe = requireAuth();
+
+		if ($hasSeenOnboarding) {
+			goto("/home");
+		}
+
+		return unsubscribe;
+	});
 
 	function completeOnboarding() {
 		isExiting = true;

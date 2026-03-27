@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { page } from "$app/stores";
+	import { goto } from "$app/navigation";
 	import { browser } from "$app/environment";
 	import { Capacitor } from "@capacitor/core";
 	import { App } from "@capacitor/app";
+	import type { PluginListenerHandle } from "@capacitor/core";
 	import { Browser } from "@capacitor/browser";
 	import BottomNav from "$lib/components/BottomNav.svelte";
 	import SplashScreen from "$lib/components/SplashScreen.svelte";
@@ -15,6 +17,7 @@
 
 	let { children } = $props();
 	let showSplash = $state(false);
+	let appUrlOpenListener: PluginListenerHandle | null = null;
 
 	// Only show splash on first load in Capacitor mobile app
 	if (browser && Capacitor.isNativePlatform()) {
@@ -23,47 +26,74 @@
 			showSplash = true;
 			isSplashVisible.set(true);
 		}
-
-		// Listen for OAuth deep link redirects on native.
-		// After setSession, the auth store's onAuthStateChange listener fetches
-		// the user profile and updates the store. The login page's requireGuest
-		// guard then detects the authenticated user and navigates to /home.
-		App.addListener("appUrlOpen", async ({ url }) => {
-			try {
-				await Browser.close();
-			} catch {
-				// Browser may already be closed
-			}
-
-			// Implicit flow: tokens in # hash fragment
-			const hashIndex = url.indexOf("#");
-			if (hashIndex >= 0) {
-				const params = new URLSearchParams(url.substring(hashIndex + 1));
-				const accessToken = params.get("access_token");
-				const refreshToken = params.get("refresh_token");
-				if (accessToken && refreshToken) {
-					await supabase.auth.setSession({
-						access_token: accessToken,
-						refresh_token: refreshToken,
-					});
-					return;
-				}
-			}
-
-			// PKCE flow: ?code= query parameter
-			const queryIndex = url.indexOf("?");
-			if (queryIndex >= 0) {
-				const params = new URLSearchParams(url.substring(queryIndex + 1));
-				const code = params.get("code");
-				if (code) {
-					await supabase.auth.exchangeCodeForSession(code);
-				}
-			}
-		});
 	}
 
-	onMount(async () => {
-		await auth.initialize();
+	onMount(() => {
+		const setup = async () => {
+			if (browser && Capacitor.isNativePlatform() && !appUrlOpenListener) {
+				appUrlOpenListener = await App.addListener("appUrlOpen", async ({ url }) => {
+					if (!url.startsWith("com.greeneye.app://login-callback")) {
+						return;
+					}
+
+					try {
+						await Browser.close();
+					} catch {
+						// Browser may already be closed
+					}
+
+					let sessionSet = false;
+
+					try {
+						const parsedUrl = new URL(url);
+
+						// Implicit flow: tokens in # hash fragment
+						if (parsedUrl.hash) {
+							const params = new URLSearchParams(parsedUrl.hash.slice(1));
+							const accessToken = params.get("access_token");
+							const refreshToken = params.get("refresh_token");
+							if (accessToken && refreshToken) {
+								await supabase.auth.setSession({
+									access_token: accessToken,
+									refresh_token: refreshToken,
+								});
+								sessionSet = true;
+							}
+						}
+
+						// PKCE flow: ?code= query parameter
+						if (!sessionSet) {
+							const code = parsedUrl.searchParams.get("code");
+							if (code) {
+								await supabase.auth.exchangeCodeForSession(code);
+								sessionSet = true;
+							}
+						}
+
+						if (!sessionSet) {
+							console.error(
+								"Native auth callback did not contain a Supabase session."
+							);
+							return;
+						}
+
+						await auth.refresh();
+						await goto("/onboarding", { replaceState: true });
+					} catch (error) {
+						console.error("Failed to handle native auth callback:", error);
+					}
+				});
+			}
+
+			await auth.initialize();
+		};
+
+		void setup();
+
+		return () => {
+			appUrlOpenListener?.remove();
+			appUrlOpenListener = null;
+		};
 	});
 
 	function handleSplashComplete() {
