@@ -1,3 +1,5 @@
+import { browser } from "$app/environment";
+
 /**
  * Weather data interface
  */
@@ -8,7 +10,17 @@ export interface WeatherData {
 	icon: string; // Weather emoji
 	humidity?: number;
 	windSpeed?: number;
+	isStale?: boolean;
 }
+
+type CachedWeatherPayload = {
+	weather: WeatherData;
+	savedAt: number;
+};
+
+const WEATHER_CACHE_KEY = "greeneye:last-weather";
+const WEATHER_CACHE_TTL_MS = 30 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 8000;
 
 /**
  * Service for fetching weather data
@@ -23,12 +35,13 @@ export class WeatherService {
 			// Get user's location
 			const location = await this.getUserLocation();
 			if (!location) {
-				return this.getFallbackWeather();
+				return this.getCachedOrFallbackWeather();
 			}
 
 			// Fetch weather data from Open-Meteo API
-			const weatherResponse = await fetch(
-				`https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit`
+			const weatherResponse = await this.fetchWithTimeout(
+				`https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=fahrenheit`,
+				FETCH_TIMEOUT_MS
 			);
 
 			if (!weatherResponse.ok) {
@@ -42,8 +55,9 @@ export class WeatherService {
 			// No API key required for client-side requests
 			let locationName = "Current Location";
 			try {
-				const geoResponse = await fetch(
-					`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=en`
+				const geoResponse = await this.fetchWithTimeout(
+					`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${location.latitude}&longitude=${location.longitude}&localityLanguage=en`,
+					FETCH_TIMEOUT_MS
 				);
 				if (geoResponse.ok) {
 					const geoData = await geoResponse.json();
@@ -64,17 +78,19 @@ export class WeatherService {
 				// Fallback to "Current Location" is already set
 			}
 
-			return {
+			const liveWeather = {
 				temperature: Math.round(weatherData.current.temperature_2m),
 				location: locationName,
 				condition: this.getWeatherCondition(weatherData.current.weather_code),
 				icon: this.getWeatherIcon(weatherData.current.weather_code),
 				humidity: weatherData.current.relative_humidity_2m,
 				windSpeed: weatherData.current.wind_speed_10m,
+				isStale: false,
 			};
+			this.storeCachedWeather(liveWeather);
+			return liveWeather;
 		} catch {
-			// Return default/fallback data
-			return this.getFallbackWeather();
+			return this.getCachedOrFallbackWeather();
 		}
 	}
 
@@ -82,7 +98,10 @@ export class WeatherService {
 	 * Get user's geolocation using Capacitor Geolocation
 	 * Works on both web and native platforms
 	 */
-	private static async getUserLocation(): Promise<{ latitude: number; longitude: number } | null> {
+	private static async getUserLocation(): Promise<{
+		latitude: number;
+		longitude: number;
+	} | null> {
 		try {
 			// Dynamically import to avoid issues when running on server
 			const { Geolocation } = await import("@capacitor/geolocation");
@@ -100,6 +119,51 @@ export class WeatherService {
 		} catch {
 			return null;
 		}
+	}
+
+	private static async fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+		const controller = new AbortController();
+		const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+		try {
+			return await fetch(url, { signal: controller.signal });
+		} finally {
+			window.clearTimeout(timeoutId);
+		}
+	}
+
+	private static storeCachedWeather(weather: WeatherData): void {
+		if (!browser) return;
+
+		const payload: CachedWeatherPayload = {
+			weather,
+			savedAt: Date.now(),
+		};
+		localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify(payload));
+	}
+
+	private static getCachedWeather(): WeatherData | null {
+		if (!browser) return null;
+
+		try {
+			const rawValue = localStorage.getItem(WEATHER_CACHE_KEY);
+			if (!rawValue) return null;
+
+			const payload = JSON.parse(rawValue) as CachedWeatherPayload;
+			if (!payload?.weather || !payload.savedAt) return null;
+			if (Date.now() - payload.savedAt > WEATHER_CACHE_TTL_MS) return null;
+
+			return {
+				...payload.weather,
+				isStale: true,
+			};
+		} catch {
+			return null;
+		}
+	}
+
+	private static getCachedOrFallbackWeather(): WeatherData {
+		return this.getCachedWeather() ?? this.getFallbackWeather();
 	}
 
 	/**
@@ -165,6 +229,7 @@ export class WeatherService {
 			icon: "⛅",
 			humidity: 65,
 			windSpeed: 10,
+			isStale: true,
 		};
 	}
 }

@@ -6,8 +6,13 @@ import type {
 	ScanResultResponse,
 	StaticDiseaseResponse,
 	UploadRecordResponse,
+	PaginatedUploads,
 } from "$lib/types/api.types";
 import type { CapturedPhoto, ScanRecord } from "$lib/types";
+
+let diseaseLibraryCache: StaticDiseaseResponse[] | null = null;
+let diseaseLibraryPromise: Promise<StaticDiseaseResponse[]> | null = null;
+const diseaseDetailCache = new Map<string, StaticDiseaseResponse>();
 
 function base64ToFile(photo: CapturedPhoto): File {
 	const byteString = atob(photo.base64);
@@ -54,7 +59,7 @@ export async function saveScan(result: PlantIDResult): Promise<void> {
 		body: JSON.stringify({
 			image_url: result.imageUrl,
 			supabase_path: result.supabasePath,
-			plant_name: topPrediction?.name ?? "Unknown",
+			plant_name: topPrediction?.common_name || topPrediction?.name || "Unknown",
 			top_predictions: result.predictions,
 			disease_name: result.disease?.disease_name ?? "",
 			disease_confidence: result.disease?.confidence ?? null,
@@ -65,6 +70,10 @@ export async function saveScan(result: PlantIDResult): Promise<void> {
 }
 
 function mapResponseToScanRecord(r: ScanResultResponse): ScanRecord {
+	const topPrediction = r.top_predictions[0];
+	const commonName = topPrediction?.common_name?.trim() || "";
+	const scientificName = topPrediction?.name?.trim() || r.plant_name;
+	const displayPlantName = commonName || r.plant_name || scientificName;
 	let diseaseName: string;
 	let description: string;
 	if (!r.disease_name) {
@@ -95,7 +104,9 @@ function mapResponseToScanRecord(r: ScanResultResponse): ScanRecord {
 			treatments: [],
 			affectedParts: [],
 		},
-		plantName: r.plant_name,
+		plantName: displayPlantName,
+		commonName: commonName || undefined,
+		scientificName: scientificName || undefined,
 		timestamp: new Date(r.created_at).getTime(),
 		imageUrl: r.image_url,
 	};
@@ -116,8 +127,11 @@ export async function deleteScan(id: string): Promise<void> {
 	});
 }
 
-export async function fetchUploads(): Promise<UploadRecordResponse[]> {
-	return apiFetch<UploadRecordResponse[]>("/images/list/");
+export async function fetchUploads(
+	page: number = 1,
+	pageSize: number = 24,
+): Promise<PaginatedUploads> {
+	return apiFetch<PaginatedUploads>(`/images/list/?page=${page}&page_size=${pageSize}`);
 }
 
 export async function deleteUpload(id: number): Promise<void> {
@@ -127,14 +141,55 @@ export async function deleteUpload(id: number): Promise<void> {
 }
 
 export async function fetchAllDiseases(): Promise<StaticDiseaseResponse[]> {
-	return apiFetch<StaticDiseaseResponse[]>("/diseases/");
+	if (diseaseLibraryCache) {
+		return diseaseLibraryCache;
+	}
+
+	if (!diseaseLibraryPromise) {
+		diseaseLibraryPromise = apiFetch<StaticDiseaseResponse[]>("/diseases/")
+			.then((data) => {
+				diseaseLibraryCache = data;
+				for (const disease of data) {
+					const key = `${disease.genus}::${disease.disease_name}`;
+					diseaseDetailCache.set(key, disease);
+				}
+				return data;
+			})
+			.finally(() => {
+				diseaseLibraryPromise = null;
+			});
+	}
+
+	return diseaseLibraryPromise;
 }
 
 export async function fetchDiseaseInfo(
 	genus: string,
 	diseaseName: string
 ): Promise<StaticDiseaseResponse> {
-	return apiFetch<StaticDiseaseResponse>(
+	const cacheKey = `${genus}::${diseaseName}`;
+	const cachedDisease = diseaseDetailCache.get(cacheKey);
+	if (cachedDisease) {
+		return cachedDisease;
+	}
+
+	if (diseaseLibraryCache) {
+		const match = diseaseLibraryCache.find(
+			(disease) => disease.genus === genus && disease.disease_name === diseaseName
+		);
+		if (match) {
+			diseaseDetailCache.set(cacheKey, match);
+			return match;
+		}
+	}
+
+	const disease = await apiFetch<StaticDiseaseResponse>(
 		`/diseases/${encodeURIComponent(genus)}/${encodeURIComponent(diseaseName)}/`
 	);
+	diseaseDetailCache.set(cacheKey, disease);
+	return disease;
+}
+
+export function preloadDiseaseLibrary(): void {
+	void fetchAllDiseases().catch(() => undefined);
 }

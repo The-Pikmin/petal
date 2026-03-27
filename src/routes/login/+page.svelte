@@ -1,18 +1,23 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
-	import { ArrowLeft, Mail, Lock } from "lucide-svelte";
+	import { Capacitor } from "@capacitor/core";
+	import { ArrowLeft, Mail, Lock, LoaderCircle, CircleCheck, TriangleAlert } from "lucide-svelte";
+	import { fade, fly } from "svelte/transition";
 	import { theme } from "$lib/stores/theme.store";
 	import { auth } from "$lib/stores/auth.store";
 	import { requireGuest } from "$lib/guards/auth.guard";
 	import logoDark from "$lib/assets/logo-dark.png";
 	import logoLight from "$lib/assets/logo-light.png";
 
+	const isNative = Capacitor.isNativePlatform();
+
 	let email = $state("");
 	let password = $state("");
 	let isLoading = $state(false);
 	let errorMessage = $state("");
 	let resetMessage = $state("");
+	let isSocialLoading = $state<"google" | null>(null);
 
 	onMount(() => {
 		return requireGuest();
@@ -41,10 +46,14 @@
 	}
 
 	async function handleGoogleLogin() {
+		isSocialLoading = "google";
+		errorMessage = "";
 		try {
 			await auth.loginWithGoogle();
 		} catch (err: unknown) {
 			errorMessage = err instanceof Error ? err.message : "Google sign-in failed.";
+		} finally {
+			isSocialLoading = null;
 		}
 	}
 
@@ -70,10 +79,14 @@
 	<title>Login - GreenEye</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+<div
+	class="fixed inset-0 bg-background flex flex-col items-center justify-center p-6 overflow-hidden"
+	style="padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: max(1.5rem, env(safe-area-inset-left)); padding-right: max(1.5rem, env(safe-area-inset-right));"
+	in:fade={{ duration: 250 }}
+>
 	<div class="w-full max-w-md space-y-8">
 		<!-- Header -->
-		<div class="text-center space-y-2">
+		<div class="text-center space-y-2" in:fly={{ y: 16, duration: 300 }}>
 			<div
 				class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 text-primary mb-4 p-5"
 			>
@@ -91,6 +104,7 @@
 		<form
 			onsubmit={handleLogin}
 			class="space-y-6 bg-card p-8 rounded-3xl border border-border shadow-sm"
+			in:fly={{ y: 20, duration: 320, delay: 80 }}
 		>
 			<div class="space-y-2">
 				<label
@@ -143,20 +157,45 @@
 			</div>
 
 			{#if errorMessage}
-				<p class="text-sm text-red-500">{errorMessage}</p>
+				<div
+					class="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-700 dark:text-red-300"
+					in:fly={{ y: 8, duration: 220 }}
+					out:fade={{ duration: 180 }}
+				>
+					<div class="flex items-start gap-3">
+						<TriangleAlert size={18} class="mt-0.5 flex-shrink-0" />
+						<p class="text-sm">{errorMessage}</p>
+					</div>
+				</div>
 			{/if}
 
 			{#if resetMessage}
-				<p class="text-sm text-green-600 dark:text-green-400">{resetMessage}</p>
+				<div
+					class="rounded-2xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-green-700 dark:text-green-300"
+					in:fly={{ y: 8, duration: 220 }}
+					out:fade={{ duration: 180 }}
+				>
+					<div class="flex items-start gap-3">
+						<CircleCheck size={18} class="mt-0.5 flex-shrink-0" />
+						<p class="text-sm">{resetMessage}</p>
+					</div>
+				</div>
 			{/if}
 
 			<!-- Login button -->
 			<button
 				type="submit"
 				disabled={isLoading}
-				class="w-full px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+				class="w-full px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
 			>
-				{isLoading ? "Signing in..." : "Sign in"}
+				<span class="flex items-center justify-center gap-2">
+					{#if isLoading}
+						<LoaderCircle size={18} class="animate-spin" />
+						<span>Signing in...</span>
+					{:else}
+						<span>Sign in</span>
+					{/if}
+				</span>
 			</button>
 		</form>
 
@@ -174,27 +213,35 @@
 		<button
 			type="button"
 			onclick={handleGoogleLogin}
-			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+			disabled={isSocialLoading === "google"}
+			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-60"
+			in:fly={{ y: 20, duration: 320, delay: 120 }}
 		>
-			<svg class="w-5 h-5" viewBox="0 0 24 24">
-				<path
-					fill="#4285F4"
-					d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-				/>
-				<path
-					fill="#34A853"
-					d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-				/>
-				<path
-					fill="#FBBC05"
-					d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-				/>
-				<path
-					fill="#EA4335"
-					d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-				/>
-			</svg>
-			<span class="font-medium text-foreground">Continue with Google</span>
+			{#if isSocialLoading === "google"}
+				<LoaderCircle size={18} class="animate-spin" />
+			{:else}
+				<svg class="w-5 h-5" viewBox="0 0 24 24">
+					<path
+						fill="#4285F4"
+						d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+					/>
+					<path
+						fill="#34A853"
+						d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+					/>
+					<path
+						fill="#FBBC05"
+						d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+					/>
+					<path
+						fill="#EA4335"
+						d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+					/>
+				</svg>
+			{/if}
+			<span class="font-medium text-foreground">
+				{isSocialLoading === "google" ? "Opening Google..." : "Continue with Google"}
+			</span>
 		</button>
 
 		<!-- Apple Sign-in -->
@@ -217,13 +264,15 @@
 			<a href="/signup" class="font-medium text-primary hover:underline">Sign up</a>
 		</div>
 
-		<div class="text-center">
-			<a
-				href="/"
-				class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-			>
-				<ArrowLeft size={16} class="mr-1" /> Back to Home
-			</a>
-		</div>
+		{#if !isNative}
+			<div class="text-center">
+				<a
+					href="/"
+					class="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+				>
+					<ArrowLeft size={16} class="mr-1" /> Back to Home
+				</a>
+			</div>
+		{/if}
 	</div>
 </div>

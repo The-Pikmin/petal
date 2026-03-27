@@ -38,20 +38,20 @@ Petal is the frontend for the GreenEye plant disease diagnosis app. Built with S
 
 # Pages / Routes
 
-| Route | Description |
-|-------|-------------|
-| `/` | Landing page (marketing, redirects to home on native) |
-| `/login` | Email/password + social login |
-| `/signup` | Account registration |
-| `/onboarding` | First-time user onboarding flow |
-| `/home` | Dashboard with weather, stats, recent scans, daily tip |
-| `/camera` | Camera capture / image upload |
-| `/scan` | Scan results with predictions and disease analysis |
-| `/history` | Scan history timeline |
-| `/history/[id]` | Single scan detail with treatment info |
-| `/library` | Disease library (filterable by genus, searchable) |
+| Route                        | Description                                                  |
+| ---------------------------- | ------------------------------------------------------------ |
+| `/`                          | Landing page (marketing, redirects to home on native)        |
+| `/login`                     | Email/password + social login                                |
+| `/signup`                    | Account registration                                         |
+| `/onboarding`                | First-time user onboarding flow                              |
+| `/home`                      | Dashboard with weather, stats, recent scans, daily tip       |
+| `/camera`                    | Camera capture / image upload                                |
+| `/scan`                      | Scan results with predictions and disease analysis           |
+| `/history`                   | Scan history timeline                                        |
+| `/history/[id]`              | Single scan detail with treatment info                       |
+| `/library`                   | Disease library (filterable by genus, searchable)            |
 | `/library/[genus]/[disease]` | Disease detail with symptoms, causes, treatments, prevention |
-| `/profile` | User profile and settings |
+| `/profile`                   | User profile and settings                                    |
 
 # Getting Started
 
@@ -60,11 +60,13 @@ Petal is the frontend for the GreenEye plant disease diagnosis app. Built with S
 2. Navigate to the `petal/` directory.
 
 3. Install dependencies:
+
 ```bash
 npm install
 ```
 
 4. Create a `.env` file:
+
 ```
 PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 PUBLIC_SUPABASE_ANON_KEY=<supabase-anon-key>
@@ -72,6 +74,7 @@ PUBLIC_API_BASE_URL=http://localhost:8000/api
 ```
 
 5. Start the development server:
+
 ```bash
 npm run dev
 ```
@@ -80,13 +83,13 @@ Open http://localhost:5173 in your browser.
 
 # Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Preview production build |
-| `npm run check` | Run svelte-check (type checking) |
-| `npm run lint` | Run ESLint |
+| Command           | Description                      |
+| ----------------- | -------------------------------- |
+| `npm run dev`     | Start dev server                 |
+| `npm run build`   | Production build                 |
+| `npm run preview` | Preview production build         |
+| `npm run check`   | Run svelte-check (type checking) |
+| `npm run lint`    | Run ESLint                       |
 
 # Contributing
 

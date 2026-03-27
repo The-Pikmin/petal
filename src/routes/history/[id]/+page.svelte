@@ -21,6 +21,13 @@
 	let loading = $state(true);
 
 	const top3 = $derived(scan ? scan.top_predictions.slice(0, 3) : []);
+	const primaryPrediction = $derived(scan?.top_predictions[0] ?? null);
+	const displayPlantName = $derived(
+		primaryPrediction?.common_name?.trim() || scan?.plant_name || "Scan Detail"
+	);
+	const displayScientificName = $derived(
+		primaryPrediction?.common_name?.trim() ? primaryPrediction.name : null
+	);
 
 	onMount(() => {
 		return requireAuth();
@@ -76,7 +83,7 @@
 </script>
 
 <svelte:head>
-	<title>{scan ? scan.plant_name : "Scan Detail"} - GreenEye</title>
+	<title>{scan ? displayPlantName : "Scan Detail"} - GreenEye</title>
 </svelte:head>
 
 <div class="min-h-screen pb-20 bg-secondary/30">
@@ -127,7 +134,7 @@
 				<div class="aspect-square bg-muted relative">
 					<img
 						src={scan.image_url}
-						alt={scan.plant_name}
+						alt={displayPlantName}
 						class="w-full h-full object-cover"
 					/>
 				</div>
@@ -135,7 +142,12 @@
 
 			<!-- Plant Info -->
 			<div in:fade={{ duration: 300, delay: 100 }}>
-				<h2 class="text-2xl font-bold text-foreground">{scan.plant_name}</h2>
+				<h2 class="text-2xl font-bold text-foreground">{displayPlantName}</h2>
+				{#if displayScientificName}
+					<p class="mt-1 text-sm italic text-muted-foreground">
+						{displayScientificName}
+					</p>
+				{/if}
 				<p class="text-sm text-muted-foreground mt-1">
 					{formatDate(scan.created_at)} at {formatTime(scan.created_at)}
 				</p>
@@ -166,13 +178,20 @@
 								>
 									{i + 1}
 								</span>
-								<span
-									class="flex-1 text-foreground italic {i === 0
-										? 'text-lg font-bold'
-										: 'text-sm'}"
-								>
-									{prediction.name}
-								</span>
+								<div class="flex-1 min-w-0">
+									<p
+										class="truncate text-foreground {i === 0
+											? 'text-lg font-bold'
+											: 'text-sm font-semibold'}"
+									>
+										{prediction.common_name?.trim() || prediction.name}
+									</p>
+									{#if prediction.common_name?.trim()}
+										<p class="truncate text-xs italic text-muted-foreground">
+											{prediction.name}
+										</p>
+									{/if}
+								</div>
 								<span class="text-sm text-muted-foreground font-medium">
 									{Math.round(prediction.confidence * 100)}%
 								</span>
@@ -256,7 +275,10 @@
 
 			<!-- Treatment Info (from static_diseases) -->
 			{#if diseaseInfo?.recommended_actions}
-				{@const info = typeof diseaseInfo.recommended_actions === "string" ? JSON.parse(diseaseInfo.recommended_actions) : diseaseInfo.recommended_actions}
+				{@const info =
+					typeof diseaseInfo.recommended_actions === "string"
+						? JSON.parse(diseaseInfo.recommended_actions)
+						: diseaseInfo.recommended_actions}
 
 				<!-- Treatment Steps -->
 				{#if info.treatments?.length}
