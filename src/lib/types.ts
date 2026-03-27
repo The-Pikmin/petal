@@ -56,6 +56,10 @@ export interface ScanRecord {
 	timestamp: number;
 	/** Plant name (if identified) */
 	plantName?: string;
+	/** Common plant name when available */
+	commonName?: string;
+	/** Scientific plant name when available */
+	scientificName?: string;
 	/** Image URL from backend storage */
 	imageUrl?: string;
 	/** User notes */

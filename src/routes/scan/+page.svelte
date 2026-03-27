@@ -16,6 +16,14 @@
 
 	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
 
+	function getPrimaryPlantLabel(name: string, commonName?: string): string {
+		return commonName?.trim() || name;
+	}
+
+	function getSecondaryPlantLabel(name: string, commonName?: string): string | null {
+		return commonName?.trim() ? name : null;
+	}
+
 	onMount(() => {
 		const unsub = requireAuth();
 
@@ -172,12 +180,28 @@
 								>
 									{i + 1}
 								</span>
-								<span
-									class="text-foreground italic {i === 0
-										? 'text-lg font-bold'
-										: 'text-sm'}"
-								>
-									{prediction.name}
+								<div class="flex-1 min-w-0">
+									<p
+										class="text-foreground truncate {i === 0
+											? 'text-lg font-bold'
+											: 'text-sm font-semibold'}"
+									>
+										{getPrimaryPlantLabel(
+											prediction.name,
+											prediction.common_name
+										)}
+									</p>
+									{#if getSecondaryPlantLabel(prediction.name, prediction.common_name)}
+										<p class="text-xs italic text-muted-foreground truncate">
+											{getSecondaryPlantLabel(
+												prediction.name,
+												prediction.common_name
+											)}
+										</p>
+									{/if}
+								</div>
+								<span class="text-sm text-muted-foreground font-medium">
+									{Math.round(prediction.confidence * 100)}%
 								</span>
 							</div>
 						{/each}
