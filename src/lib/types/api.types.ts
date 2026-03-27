@@ -11,6 +11,15 @@ export interface ImageUploadResponse {
 	supabase_path: string;
 	uploaded_at: string;
 	url: string;
+	in_use?: boolean;
+}
+
+export interface UploadRecordResponse {
+	id: number;
+	supabase_path: string;
+	uploaded_at: string;
+	url: string;
+	in_use: boolean;
 }
 
 // === Prediction ===
@@ -46,6 +55,7 @@ export interface PredictResponse {
 // === Combined scan result ===
 export interface PlantIDResult {
 	imageUrl: string;
+	supabasePath: string;
 	predictions: SpeciesPrediction[];
 	disease: DiseaseResult | null;
 	low_confidence: boolean;

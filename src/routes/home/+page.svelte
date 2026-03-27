@@ -5,7 +5,6 @@
 	import { theme } from "$lib/stores/theme.store";
 	import { WeatherService, type WeatherData } from "$lib/services/weather.service";
 	import {
-		Bell,
 		Search,
 		Sun,
 		Moon,
@@ -33,6 +32,7 @@
 	let weather = $state<WeatherData | null>(null);
 	let recentScans = $state<ScanRecord[]>([]);
 	let showContent = $state(false);
+	let searchQuery = $state("");
 
 	const totalScans = tweened(0, { duration: 1000, easing: cubicOut });
 	const plantsSaved = tweened(0, { duration: 1000, easing: cubicOut });
@@ -58,8 +58,8 @@
 			// Fetch weather data
 			try {
 				weather = await WeatherService.getCurrentWeather();
-			} catch (error) {
-				console.error("Failed to load weather:", error);
+			} catch {
+				weather = null;
 			}
 
 			// Load recent scans from backend
@@ -74,8 +74,8 @@
 							.filter((d) => d && d !== "Healthy Plant" && d !== "Unknown")
 					).size
 				);
-			} catch (err) {
-				console.error("Failed to load recent scans:", err);
+			} catch {
+				recentScans = [];
 			}
 		};
 
@@ -139,6 +139,12 @@
 
 		return "animate-sun-radiate"; // Default
 	}
+
+	function handleSearch(event?: SubmitEvent) {
+		event?.preventDefault();
+		const query = searchQuery.trim();
+		goto(query ? `/library?q=${encodeURIComponent(query)}` : "/library");
+	}
 </script>
 
 <svelte:head>
@@ -182,34 +188,27 @@
 							<Moon size={20} />
 						{/if}
 					</button>
-					<button
-						class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted relative"
-						aria-label="Notifications"
-					>
-						<Bell size={20} />
-						<span
-							class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-background"
-						></span>
-					</button>
-
 					<!-- Desktop Hamburger Menu -->
 					<HamburgerMenu />
 				</div>
 			</div>
 
 			<!-- Search Bar -->
-			<div class="relative">
+			<form class="relative" onsubmit={handleSearch}>
 				<input
 					type="text"
+					bind:value={searchQuery}
 					placeholder="Search plant diseases..."
 					class="w-full px-4 py-3 pr-12 rounded-2xl border border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 				/>
 				<button
+					type="submit"
 					class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full flex items-center justify-center bg-primary text-primary-foreground"
+					aria-label="Search disease library"
 				>
 					<Search size={16} />
 				</button>
-			</div>
+			</form>
 		</div>
 	</header>
 

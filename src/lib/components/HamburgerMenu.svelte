@@ -2,7 +2,7 @@
 	import { page } from "$app/stores";
 	import { goto } from "$app/navigation";
 	import { slide, fade } from "svelte/transition";
-	import { Home, BookOpen, Camera, History, User, Menu, X } from "lucide-svelte";
+	import { Home, BookOpen, Camera, History, Images, User, Menu, X } from "lucide-svelte";
 
 	let isOpen = $state(false);
 	let currentPath = $derived($page.url.pathname);
@@ -12,6 +12,7 @@
 		{ icon: BookOpen, label: "Library", path: "/library" },
 		{ icon: Camera, label: "Scan", path: "/camera" },
 		{ icon: History, label: "History", path: "/history" },
+		{ icon: Images, label: "Uploads", path: "/uploads" },
 		{ icon: User, label: "Profile", path: "/profile" },
 	];
 

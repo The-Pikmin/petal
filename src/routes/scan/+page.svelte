@@ -55,14 +55,21 @@
 
 		try {
 			await saveScan(result);
-		} catch (err) {
-			console.error("Failed to save scan:", err);
+		} catch {
+			analysisError = "We couldn't save this scan, but your results are still visible.";
+			isSaved = false;
+			return;
 		}
 
 		setTimeout(() => goto("/history"), 1500);
 	}
 
 	function scanAgain() {
+		sessionStorage.removeItem("capturedPhoto");
+		photo = null;
+		result = null;
+		analysisError = null;
+		isSaved = false;
 		goto("/camera");
 	}
 </script>

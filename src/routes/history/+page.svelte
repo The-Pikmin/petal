@@ -1,28 +1,32 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import type { ScanRecord } from "$lib/types";
 	import { requireAuth } from "$lib/guards/auth.guard";
-	import { fetchScanHistory } from "$lib/services/scan.service";
-	import { Clock, CheckCircle, AlertCircle, Camera } from "lucide-svelte";
+	import { deleteScan, fetchScanHistory } from "$lib/services/scan.service";
+	import { Clock, CheckCircle, AlertCircle, Camera, Trash2, Images } from "lucide-svelte";
 	import { fly } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
 	let scanHistory = $state<ScanRecord[]>([]);
+	let deletingId = $state<string | null>(null);
+	let statusMessage = $state("");
 
 	onMount(() => {
-		const authUnsub = requireAuth();
+		return requireAuth();
+	});
 
+	$effect(() => {
+		const _url = page.url.href;
 		fetchScanHistory()
 			.then((scans) => {
 				scanHistory = scans;
 			})
-			.catch((err) => {
-				console.error("Failed to load scan history:", err);
+			.catch(() => {
+				scanHistory = [];
 			});
-
-		return authUnsub;
 	});
 
 	function formatDate(timestamp: number): string {
@@ -67,6 +71,25 @@
 				return "bg-muted text-muted-foreground border-border";
 		}
 	}
+
+	async function handleDeleteScan(scanId: string) {
+		const confirmed = window.confirm(
+			"Delete this scan from your history? This cannot be undone."
+		);
+		if (!confirmed) return;
+
+		deletingId = scanId;
+		statusMessage = "";
+		try {
+			await deleteScan(scanId);
+			scanHistory = scanHistory.filter((scan) => scan.id !== scanId);
+			statusMessage = "Scan deleted from history.";
+		} catch (err) {
+			statusMessage = err instanceof Error ? err.message : "Unable to delete this scan.";
+		} finally {
+			deletingId = null;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -88,10 +111,11 @@
 				</div>
 				<div class="flex items-center gap-2">
 					<button
+						onclick={() => goto("/uploads")}
 						class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
-						aria-label="Filter"
+						aria-label="Manage uploads"
 					>
-						<Clock size={20} />
+						<Images size={20} />
 					</button>
 					<HamburgerMenu />
 				</div>
@@ -102,90 +126,114 @@
 	<!-- Main Content -->
 	<main class="px-6 py-4">
 		<div class="container-responsive">
+			{#if statusMessage}
+				<div class="mb-4 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
+					<p class="text-sm text-foreground">{statusMessage}</p>
+				</div>
+			{/if}
+
 			{#if scanHistory.length > 0}
 				<!-- Scan Timeline -->
 				<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 					{#each scanHistory as scan, i (scan.id || i)}
-						<button
-							onclick={() => goto("/history/" + scan.id)}
-							class="w-full rounded-3xl p-4 text-left hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
+						<article
+							class="w-full rounded-3xl p-4 bg-card text-card-foreground shadow-sm border border-border h-full"
 							in:fly|global={{ y: 20, duration: 400, delay: 200 + i * 50 }}
 						>
-							<div class="flex gap-4 h-full">
-								<!-- Scan Image -->
-								<div
-									class="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0"
+								<button
+									onclick={() => goto("/history/" + scan.id)}
+									class="w-full text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
 								>
-									{#if scan.imageUrl}
-										<img
-											src={scan.imageUrl}
-											alt={scan.plantName || "Plant"}
-											class="w-full h-full object-cover"
-										/>
-									{:else}
-										<div
-											class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
-										>
-											{#if scan.diagnosis.diseaseName === "Healthy Plant"}
-												<CheckCircle
-													class="text-green-600 dark:text-green-400"
-													size={32}
-												/>
-											{:else}
-												<AlertCircle
-													class="text-orange-600 dark:text-orange-400"
-													size={32}
-												/>
-											{/if}
-										</div>
-									{/if}
-								</div>
-
-								<!-- Scan Info -->
-								<div class="flex-1 min-w-0 flex flex-col">
-									<!-- Plant Name & Date -->
-									<div class="flex items-start justify-between gap-2 mb-2">
-										<div>
-											<h3 class="font-semibold text-foreground">
-												{scan.plantName || "Unknown Plant"}
-											</h3>
-											<p class="text-xs text-muted-foreground">
-												{formatDate(scan.timestamp)} • {formatTime(
-													scan.timestamp
-												)}
-											</p>
-										</div>
-									</div>
-
-									<!-- Disease Name -->
-									<p class="text-sm font-medium text-foreground mb-2">
-										{scan.diagnosis.diseaseName}
-									</p>
-
-									<!-- Severity Badge -->
-									<div class="flex items-center gap-2 mt-auto">
-										<span
-											class="px-2 py-1 rounded-full text-xs font-medium border {getSeverityColor(
-												scan.diagnosis.severity
-											)}"
-										>
-											{scan.diagnosis.severity.charAt(0).toUpperCase() +
-												scan.diagnosis.severity.slice(1)} Severity
-										</span>
-										{#if scan.diagnosis.treatments.length > 0}
-											<span
-												class="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+									<div class="flex gap-4 h-full">
+										<!-- Scan Image -->
+											<div
+												class="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0"
 											>
-												{scan.diagnosis.treatments.length} treatment{scan
-													.diagnosis.treatments.length !== 1
-													? "s"
-													: ""}
-											</span>
-										{/if}
+												{#if scan.imageUrl}
+													<img
+														src={scan.imageUrl}
+														alt={scan.plantName || "Plant"}
+														class="w-full h-full object-cover"
+													/>
+												{:else}
+													<div
+														class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+													>
+														{#if scan.diagnosis.diseaseName === "Healthy Plant"}
+															<CheckCircle
+																class="text-green-600 dark:text-green-400"
+																size={32}
+															/>
+														{:else}
+															<AlertCircle
+																class="text-orange-600 dark:text-orange-400"
+																size={32}
+															/>
+														{/if}
+													</div>
+												{/if}
+											</div>
+
+										<!-- Scan Info -->
+										<div class="flex-1 min-w-0 flex flex-col">
+											<!-- Plant Name & Date -->
+											<div class="flex items-start justify-between gap-2 mb-2">
+												<div>
+													<h3 class="font-semibold text-foreground">
+														{scan.plantName || "Unknown Plant"}
+													</h3>
+													<p class="text-xs text-muted-foreground">
+														{formatDate(scan.timestamp)} • {formatTime(
+															scan.timestamp
+														)}
+													</p>
+												</div>
+											</div>
+
+											<!-- Disease Name -->
+											<p class="text-sm font-medium text-foreground mb-2">
+												{scan.diagnosis.diseaseName}
+											</p>
+
+											<div class="mt-auto flex items-center gap-2">
+												<span
+													class="px-2 py-1 rounded-full text-xs font-medium border {getSeverityColor(
+														scan.diagnosis.severity
+													)}"
+												>
+													{scan.diagnosis.severity.charAt(0).toUpperCase() +
+														scan.diagnosis.severity.slice(1)} Severity
+												</span>
+												{#if scan.diagnosis.treatments.length > 0}
+													<span
+														class="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground"
+													>
+														{scan.diagnosis.treatments.length} treatment{scan
+															.diagnosis.treatments.length !== 1
+															? "s"
+															: ""}
+													</span>
+												{/if}
+											</div>
+										</div>
 									</div>
+							</button>
+
+							<div class="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4">
+								<div class="flex items-center gap-2 text-xs text-muted-foreground">
+									<Clock size={14} />
+									<span>{formatDate(scan.timestamp)}</span>
 								</div>
+								<button
+									onclick={() => handleDeleteScan(scan.id)}
+									disabled={deletingId === scan.id}
+									class="inline-flex items-center gap-2 rounded-full border border-destructive/20 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-60"
+								>
+									<Trash2 size={16} />
+									{deletingId === scan.id ? "Deleting..." : "Delete"}
+								</button>
 							</div>
-						</button>
+						</article>
 					{/each}
 				</div>
 			{:else}

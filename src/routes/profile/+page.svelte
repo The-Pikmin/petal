@@ -22,6 +22,8 @@
 	import { auth, currentUser } from "$lib/stores/auth.store";
 	import { requireAuth } from "$lib/guards/auth.guard";
 
+	let statusMessage = $state("");
+
 	onMount(() => {
 		return requireAuth();
 	});
@@ -31,12 +33,16 @@
 		goto("/login");
 	}
 
+	function showComingSoon(label: string) {
+		statusMessage = `${label} is coming soon. For the demo, the core diagnosis flow is ready.`;
+	}
+
 	const settingsSections = [
 		{
 			title: "Account",
 			items: [
-				{ icon: User, label: "Edit Profile", action: () => {} },
-				{ icon: Mail, label: "Email & Password", action: () => {} },
+					{ icon: User, label: "Edit Profile", action: () => showComingSoon("Profile editing") },
+					{ icon: Mail, label: "Email & Password", action: () => showComingSoon("Password settings") },
 			],
 		},
 		{
@@ -46,28 +52,28 @@
 					icon: Bell,
 					label: "Notifications",
 					subtitle: "Enabled",
-					action: () => {},
+					action: () => showComingSoon("Notifications"),
 				},
 				{
 					icon: Globe,
 					label: "Language",
 					subtitle: "English",
-					action: () => {},
+					action: () => showComingSoon("Language preferences"),
 				},
 			],
 		},
 		{
 			title: "Privacy & Security",
 			items: [
-				{ icon: Shield, label: "Data & Privacy", action: () => {} },
-				{ icon: Shield, label: "Terms of Service", action: () => {} },
+				{ icon: Shield, label: "Data & Privacy", action: () => showComingSoon("Privacy controls") },
+				{ icon: Shield, label: "Terms of Service", action: () => showComingSoon("Terms of Service") },
 			],
 		},
 		{
 			title: "Support",
 			items: [
-				{ icon: HelpCircle, label: "Help & FAQs", action: () => {} },
-				{ icon: Info, label: "About GreenEye", action: () => {} },
+				{ icon: HelpCircle, label: "Help & FAQs", action: () => showComingSoon("Help center") },
+				{ icon: Info, label: "About GreenEye", action: () => showComingSoon("About GreenEye") },
 			],
 		},
 	];
@@ -120,6 +126,7 @@
 
 						<!-- Edit Button -->
 						<button
+							onclick={() => showComingSoon("Profile editing")}
 							class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
 							aria-label="Edit profile"
 						>
@@ -159,6 +166,23 @@
 						</button>
 					</div>
 				</div>
+
+				{#if statusMessage}
+					<div
+						class="rounded-3xl p-4 bg-primary/5 text-card-foreground shadow-sm border border-primary/15"
+						in:fade={{ duration: 250 }}
+					>
+						<div class="flex items-start justify-between gap-4">
+							<p class="text-sm text-foreground">{statusMessage}</p>
+							<button
+								onclick={() => (statusMessage = "")}
+								class="text-xs font-semibold text-primary hover:opacity-80"
+							>
+								Dismiss
+							</button>
+						</div>
+					</div>
+				{/if}
 			</div>
 
 			<!-- Right Column (Desktop) -->
