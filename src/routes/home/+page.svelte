@@ -230,6 +230,14 @@
 		}
 		return "border-sky-500/20 bg-[linear-gradient(135deg,rgba(14,165,233,0.18),rgba(14,165,233,0.05))] text-sky-700 dark:text-sky-300";
 	}
+
+	function getGreeting(): string {
+		const hour = new Date().getHours();
+		if (hour >= 5 && hour < 12) return "Good morning";
+		if (hour >= 12 && hour < 17) return "Good afternoon";
+		if (hour >= 17 && hour < 21) return "Good evening";
+		return "Good night";
+	}
 </script>
 
 <svelte:head>
@@ -253,7 +261,7 @@
 						<Leaf size={20} />
 					</button>
 					<div>
-						<p class="text-xs text-muted-foreground">Good morning</p>
+						<p class="text-xs text-muted-foreground">{getGreeting()}</p>
 						<h2 class="font-bold text-foreground leading-none">
 							{$currentUser?.username ?? "Gardener"}
 						</h2>
@@ -299,18 +307,27 @@
 							</div>
 							<div class="grid grid-cols-3 gap-3">
 								<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
+									<div class="mb-2 flex justify-center text-sky-600 dark:text-sky-400">
+										<History size={16} />
+									</div>
 									<p class="text-lg font-bold text-foreground">{Math.round($totalScans)}</p>
 									<p class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
 										Scans
 									</p>
 								</div>
 								<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
+									<div class="mb-2 flex justify-center text-emerald-600 dark:text-emerald-400">
+										<Leaf size={16} />
+									</div>
 									<p class="text-lg font-bold text-foreground">{Math.round($plantsSaved)}</p>
 									<p class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
 										Plants
 									</p>
 								</div>
 								<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
+									<div class="mb-2 flex justify-center text-amber-600 dark:text-amber-400">
+										<AlertCircle size={16} />
+									</div>
 									<p class="text-lg font-bold text-foreground">{Math.round($diseasesIdentified)}</p>
 									<p class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
 										Alerts

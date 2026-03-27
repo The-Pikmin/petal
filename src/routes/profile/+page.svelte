@@ -23,19 +23,30 @@
 	import { requireAuth } from "$lib/guards/auth.guard";
 
 	let statusMessage = $state("");
+	let statusTone = $state<"info" | "success">("info");
 
 	onMount(() => {
 		return requireAuth();
 	});
 
-	function handleSignOut() {
-		auth.logout();
-		goto("/login");
+	async function handleSignOut() {
+		await auth.logout();
+		goto("/login", { replaceState: true });
 	}
 
 	function showComingSoon(label: string) {
+		statusTone = "info";
 		statusMessage = `${label} is coming soon. For the demo, the core diagnosis flow is ready.`;
 	}
+
+	$effect(() => {
+		if (!statusMessage) return;
+		const timeoutId = window.setTimeout(() => {
+			statusMessage = "";
+		}, 4200);
+
+		return () => window.clearTimeout(timeoutId);
+	});
 
 	const settingsSections = [
 		{
@@ -169,8 +180,13 @@
 
 				{#if statusMessage}
 					<div
-						class="rounded-3xl p-4 bg-primary/5 text-card-foreground shadow-sm border border-primary/15"
-						in:fade={{ duration: 250 }}
+						class={`rounded-3xl p-4 text-card-foreground shadow-sm border ${
+							statusTone === "success"
+								? "bg-green-500/10 border-green-500/20"
+								: "bg-primary/5 border-primary/15"
+						}`}
+						in:fly={{ y: 10, duration: 220 }}
+						out:fade={{ duration: 180 }}
 					>
 						<div class="flex items-start justify-between gap-4">
 							<p class="text-sm text-foreground">{statusMessage}</p>

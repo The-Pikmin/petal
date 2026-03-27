@@ -14,8 +14,9 @@
 		Search,
 		ArrowUpDown,
 		Clock3,
+		ChevronDown,
 	} from "lucide-svelte";
-	import { fly } from "svelte/transition";
+	import { fade, fly, slide } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
@@ -33,10 +34,13 @@
 	let loading = $state(true);
 	let deletingId = $state<string | null>(null);
 	let statusMessage = $state("");
+	let statusTone = $state<"success" | "error">("success");
 	let searchQuery = $state("");
 	let isSearchOpen = $state(false);
+	let showFilters = $state(false);
 	let sortOption = $state<SortOption>("newest");
 	let severityFilter = $state<SeverityFilter>("all");
+	const hasActiveFilters = $derived(sortOption !== "newest" || severityFilter !== "all");
 
 	const filteredHistory = $derived.by(() => {
 		let results = [...scanHistory];
@@ -160,13 +164,24 @@
 		try {
 			await deleteScan(scanId);
 			scanHistory = scanHistory.filter((scan) => scan.id !== scanId);
+			statusTone = "success";
 			statusMessage = "Scan deleted from history.";
 		} catch (err) {
+			statusTone = "error";
 			statusMessage = err instanceof Error ? err.message : "Unable to delete this scan.";
 		} finally {
 			deletingId = null;
 		}
 	}
+
+	$effect(() => {
+		if (!statusMessage) return;
+		const timeoutId = window.setTimeout(() => {
+			statusMessage = "";
+		}, statusTone === "success" ? 3200 : 4200);
+
+		return () => window.clearTimeout(timeoutId);
+	});
 
 	function clearSearch() {
 		searchQuery = "";
@@ -214,6 +229,25 @@
 					</div>
 					<div class="flex items-center gap-2">
 						<button
+							onclick={() => (showFilters = !showFilters)}
+							class="inline-flex h-10 items-center gap-2 rounded-full border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+							aria-expanded={showFilters}
+							aria-label="Toggle filters"
+						>
+							<span class="whitespace-nowrap">Filters</span>
+							{#if hasActiveFilters}
+								<span
+									class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[11px] font-bold text-primary"
+								>
+									{Number(sortOption !== "newest") + Number(severityFilter !== "all")}
+								</span>
+							{/if}
+							<ChevronDown
+								size={16}
+								class={`transition-transform ${showFilters ? "rotate-180" : ""}`}
+							/>
+						</button>
+						<button
 							onclick={() => (isSearchOpen = true)}
 							class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
 							aria-label="Search history"
@@ -233,53 +267,70 @@
 			</div>
 
 			<div class="space-y-3">
-				<div class="rounded-[1.75rem] border border-border bg-card/70 p-3 shadow-sm backdrop-blur-sm">
-					<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-					<button
-						onclick={() => (sortOption = "newest")}
-						class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {sortOption ===
-						'newest'
-							? 'bg-primary text-primary-foreground shadow-sm'
-							: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
+				{#if showFilters}
+					<div
+						class="rounded-[1.75rem] border border-border bg-card/70 p-3 shadow-sm backdrop-blur-sm"
+						transition:slide={{ duration: 180 }}
 					>
-						Newest
-					</button>
-					<button
-						onclick={() => (sortOption = "oldest")}
-						class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {sortOption ===
-						'oldest'
-							? 'bg-primary text-primary-foreground shadow-sm'
-							: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
-					>
-						Oldest
-					</button>
-					<button
-						onclick={() => (sortOption = "severity")}
-						class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {sortOption ===
-						'severity'
-							? 'bg-primary text-primary-foreground shadow-sm'
-							: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
-					>
-						<ArrowUpDown size={14} class="inline mr-2" />By Severity
-					</button>
-					<div class="flex items-center px-1">
-						<div class="h-8 w-px bg-border"></div>
+						<div class="space-y-3">
+							<div class="space-y-2">
+								<p class="px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+									Sort
+								</p>
+								<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+									<button
+										onclick={() => (sortOption = "newest")}
+										class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {sortOption ===
+										'newest'
+											? 'bg-primary text-primary-foreground shadow-sm'
+											: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
+									>
+										Newest
+									</button>
+									<button
+										onclick={() => (sortOption = "oldest")}
+										class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {sortOption ===
+										'oldest'
+											? 'bg-primary text-primary-foreground shadow-sm'
+											: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
+									>
+										Oldest
+									</button>
+									<button
+										onclick={() => (sortOption = "severity")}
+										class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {sortOption ===
+										'severity'
+											? 'bg-primary text-primary-foreground shadow-sm'
+											: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
+									>
+										<ArrowUpDown size={14} class="mr-2" />Severity
+									</button>
+								</div>
+							</div>
+
+							<div class="space-y-2">
+								<p class="px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+									Severity
+								</p>
+								<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+									{#each ["all", "low", "medium", "high", "critical"] as filter}
+										<button
+											onclick={() => (severityFilter = filter as SeverityFilter)}
+											class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {severityFilter ===
+											filter
+												? 'bg-secondary text-secondary-foreground border border-primary/20 shadow-sm'
+												: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
+										>
+											{filter === "all"
+												? "All"
+												: filter.charAt(0).toUpperCase() + filter.slice(1)}
+										</button>
+									{/each}
+								</div>
+							</div>
+						</div>
 					</div>
-					{#each ["all", "low", "medium", "high", "critical"] as filter}
-						<button
-							onclick={() => (severityFilter = filter as SeverityFilter)}
-							class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {severityFilter ===
-							filter
-								? 'bg-secondary text-secondary-foreground border border-primary/20 shadow-sm'
-								: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
-						>
-							{filter === "all"
-								? "All"
-								: filter.charAt(0).toUpperCase() + filter.slice(1)}
-						</button>
-					{/each}
-				</div>
-				</div>
+				{/if}
 			</div>
 		</div>
 	</header>
@@ -287,7 +338,15 @@
 	<main class="px-6 py-4">
 		<div class="container-responsive">
 			{#if statusMessage}
-				<div class="mb-4 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
+				<div
+					class={`mb-4 rounded-2xl px-4 py-3 ${
+						statusTone === "success"
+							? "border border-green-500/20 bg-green-500/10"
+							: "border border-red-500/20 bg-red-500/10"
+					}`}
+					in:fly={{ y: 10, duration: 220 }}
+					out:fade={{ duration: 180 }}
+				>
 					<p class="text-sm text-foreground">{statusMessage}</p>
 				</div>
 			{/if}

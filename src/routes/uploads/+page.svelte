@@ -14,6 +14,7 @@
 	let error = $state<string | null>(null);
 	let deletingId = $state<number | null>(null);
 	let statusMessage = $state("");
+	let statusTone = $state<"success" | "error" | "info">("info");
 
 	onMount(() => {
 		const unsubscribe = requireAuth();
@@ -43,6 +44,7 @@
 
 	async function handleDeleteUpload(upload: UploadRecordResponse) {
 		if (upload.in_use) {
+			statusTone = "info";
 			statusMessage = "Delete the saved scan that uses this image before removing the upload.";
 			return;
 		}
@@ -57,13 +59,24 @@
 		try {
 			await deleteUpload(upload.id);
 			uploads = uploads.filter((item) => item.id !== upload.id);
+			statusTone = "success";
 			statusMessage = "Upload deleted.";
 		} catch (err) {
+			statusTone = "error";
 			statusMessage = err instanceof Error ? err.message : "Unable to delete this upload.";
 		} finally {
 			deletingId = null;
 		}
 	}
+
+	$effect(() => {
+		if (!statusMessage) return;
+		const timeoutId = window.setTimeout(() => {
+			statusMessage = "";
+		}, statusTone === "error" ? 4200 : 3200);
+
+		return () => window.clearTimeout(timeoutId);
+	});
 </script>
 
 <svelte:head>
@@ -112,7 +125,16 @@
 			</div>
 
 			{#if statusMessage}
-				<div class="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3">
+				<div
+					class={`rounded-2xl px-4 py-3 ${
+						statusTone === "success"
+							? "border border-green-500/20 bg-green-500/10"
+							: statusTone === "error"
+								? "border border-red-500/20 bg-red-500/10"
+								: "border border-primary/15 bg-primary/5"
+					}`}
+					in:fade={{ duration: 200 }}
+				>
 					<p class="text-sm text-foreground">{statusMessage}</p>
 				</div>
 			{/if}

@@ -1,7 +1,15 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
-	import { ArrowLeft, Mail, Lock, User } from "lucide-svelte";
+	import {
+		ArrowLeft,
+		Mail,
+		Lock,
+		User,
+		LoaderCircle,
+		TriangleAlert,
+	} from "lucide-svelte";
+	import { fade, fly } from "svelte/transition";
 	import { theme } from "$lib/stores/theme.store";
 	import { auth } from "$lib/stores/auth.store";
 	import { requireGuest } from "$lib/guards/auth.guard";
@@ -13,6 +21,7 @@
 	let password = $state("");
 	let isLoading = $state(false);
 	let errorMessage = $state("");
+	let isSocialLoading = $state<"google" | null>(null);
 
 	onMount(() => {
 		return requireGuest();
@@ -39,10 +48,14 @@
 	}
 
 	async function handleGoogleSignup() {
+		isSocialLoading = "google";
+		errorMessage = "";
 		try {
 			await auth.loginWithGoogle();
 		} catch (err: unknown) {
 			errorMessage = err instanceof Error ? err.message : "Google sign-in failed.";
+		} finally {
+			isSocialLoading = null;
 		}
 	}
 </script>
@@ -51,10 +64,10 @@
 	<title>Sign Up - GreenEye</title>
 </svelte:head>
 
-<div class="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+<div class="min-h-screen bg-background flex flex-col items-center justify-center p-6" in:fade={{ duration: 250 }}>
 	<div class="w-full max-w-md space-y-8">
 		<!-- Header -->
-		<div class="text-center space-y-2">
+		<div class="text-center space-y-2" in:fly={{ y: 16, duration: 300 }}>
 			<div
 				class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-primary/10 text-primary mb-4 p-5"
 			>
@@ -72,6 +85,7 @@
 		<form
 			onsubmit={handleSignup}
 			class="space-y-6 bg-card p-8 rounded-3xl border border-border shadow-sm"
+			in:fly={{ y: 20, duration: 320, delay: 80 }}
 		>
 			<div class="space-y-2">
 				<label
@@ -137,16 +151,32 @@
 			</div>
 
 			{#if errorMessage}
-				<p class="text-sm text-red-500">{errorMessage}</p>
+				<div
+					class="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-red-700 dark:text-red-300"
+					in:fly={{ y: 8, duration: 220 }}
+					out:fade={{ duration: 180 }}
+				>
+					<div class="flex items-start gap-3">
+						<TriangleAlert size={18} class="mt-0.5 flex-shrink-0" />
+						<p class="text-sm">{errorMessage}</p>
+					</div>
+				</div>
 			{/if}
 
 			<!-- Sign up button -->
 			<button
 				type="submit"
 				disabled={isLoading}
-				class="w-full px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+				class="w-full px-4 py-3 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
 			>
-				{isLoading ? "Creating account..." : "Create account"}
+				<span class="flex items-center justify-center gap-2">
+					{#if isLoading}
+						<LoaderCircle size={18} class="animate-spin" />
+						<span>Creating account...</span>
+					{:else}
+						<span>Create account</span>
+					{/if}
+				</span>
 			</button>
 		</form>
 
@@ -164,9 +194,14 @@
 		<button
 			type="button"
 			onclick={handleGoogleSignup}
-			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-colors"
+			disabled={isSocialLoading === "google"}
+			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-background hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-60"
+			in:fly={{ y: 20, duration: 320, delay: 120 }}
 		>
-			<svg class="w-5 h-5" viewBox="0 0 24 24">
+			{#if isSocialLoading === "google"}
+				<LoaderCircle size={18} class="animate-spin" />
+			{:else}
+				<svg class="w-5 h-5" viewBox="0 0 24 24">
 				<path
 					fill="#4285F4"
 					d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -183,8 +218,11 @@
 					fill="#EA4335"
 					d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
 				/>
-			</svg>
-			<span class="font-medium text-foreground">Continue with Google</span>
+				</svg>
+			{/if}
+			<span class="font-medium text-foreground">
+				{isSocialLoading === "google" ? "Opening Google..." : "Continue with Google"}
+			</span>
 		</button>
 
 		<!-- Apple Sign-in -->

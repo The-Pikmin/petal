@@ -5,7 +5,8 @@
 	import type { PlantIDResult } from "$lib/types/api.types";
 	import { identifyPlant, saveScan } from "$lib/services/scan.service";
 	import { requireAuth } from "$lib/guards/auth.guard";
-	import { CheckCircle, Home, Camera, Save, AlertCircle, Leaf } from "lucide-svelte";
+	import { CheckCircle, Home, Camera, Save, AlertCircle, Leaf, LoaderCircle } from "lucide-svelte";
+	import { fade, fly } from "svelte/transition";
 	import PlantGrowingLoader from "$lib/components/PlantGrowingLoader.svelte";
 
 	let photo = $state<CapturedPhoto | null>(null);
@@ -13,6 +14,7 @@
 	let result = $state<PlantIDResult | null>(null);
 	let analysisError = $state<string | null>(null);
 	let isSaved = $state(false);
+	let isSaving = $state(false);
 
 	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
 
@@ -58,15 +60,18 @@
 	}
 
 	async function saveToHistory() {
-		if (!photo || !result) return;
-		isSaved = true;
+		if (!photo || !result || isSaving || isSaved) return;
+		isSaving = true;
 
 		try {
 			await saveScan(result);
+			isSaved = true;
 		} catch {
 			analysisError = "We couldn't save this scan, but your results are still visible.";
 			isSaved = false;
 			return;
+		} finally {
+			isSaving = false;
 		}
 
 		setTimeout(() => goto("/history"), 1500);
@@ -123,7 +128,11 @@
 
 			<!-- Error State -->
 			{#if analysisError}
-				<div class="rounded-3xl p-6 bg-card border border-border shadow-sm">
+				<div
+					class="rounded-3xl p-6 bg-card border border-red-500/15 shadow-sm"
+					in:fly={{ y: 12, duration: 220 }}
+					out:fade={{ duration: 180 }}
+				>
 					<div class="flex items-center gap-3 mb-3">
 						<AlertCircle size={24} class="text-red-500 flex-shrink-0" />
 						<h2 class="text-lg font-bold text-foreground">Identification Failed</h2>
@@ -281,14 +290,21 @@
 					{#if !isSaved}
 						<button
 							onclick={saveToHistory}
-							class="w-full px-6 py-4 rounded-3xl font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+							disabled={isSaving}
+							class="w-full px-6 py-4 rounded-3xl font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2 disabled:opacity-70 disabled:hover:scale-100"
 						>
-							<Save size={20} />
-							<span>Save to History</span>
+							{#if isSaving}
+								<LoaderCircle size={20} class="animate-spin" />
+								<span>Saving...</span>
+							{:else}
+								<Save size={20} />
+								<span>Save to History</span>
+							{/if}
 						</button>
 					{:else}
 						<div
 							class="w-full px-6 py-4 rounded-3xl font-semibold bg-green-600 text-white flex items-center justify-center gap-2"
+							in:fly={{ y: 10, duration: 220 }}
 						>
 							<CheckCircle size={20} />
 							<span>Saved!</span>
