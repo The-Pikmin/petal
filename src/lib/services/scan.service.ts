@@ -129,7 +129,7 @@ export async function deleteScan(id: string): Promise<void> {
 
 export async function fetchUploads(
 	page: number = 1,
-	pageSize: number = 24
+	pageSize: number = 24,
 ): Promise<PaginatedUploads> {
 	return apiFetch<PaginatedUploads>(`/images/list/?page=${page}&page_size=${pageSize}`);
 }

@@ -39,10 +39,10 @@
 			[...selectedIds].every((id) => {
 				const u = uploads.find((u) => u.id === id);
 				return u && !u.in_use;
-			})
+			}),
 	);
 	const hasInUseSelected = $derived(
-		[...selectedIds].some((id) => uploads.find((u) => u.id === id)?.in_use)
+		[...selectedIds].some((id) => uploads.find((u) => u.id === id)?.in_use),
 	);
 
 	onMount(() => {
@@ -134,7 +134,7 @@
 		if (toDelete.length === 0) return;
 
 		const confirmed = window.confirm(
-			`Delete ${toDelete.length} upload${toDelete.length > 1 ? "s" : ""}? This cannot be undone.`
+			`Delete ${toDelete.length} upload${toDelete.length > 1 ? "s" : ""}? This cannot be undone.`,
 		);
 		if (!confirmed) return;
 
@@ -214,7 +214,7 @@
 			() => {
 				statusMessage = "";
 			},
-			statusTone === "error" ? 4200 : 3200
+			statusTone === "error" ? 4200 : 3200,
 		);
 
 		return () => window.clearTimeout(timeoutId);
@@ -350,11 +350,7 @@
 				<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
 					{#each uploads as upload (upload.id)}
 						<button
-							class="relative aspect-square bg-muted overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {selectedIds.has(
-								upload.id
-							)
-								? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-								: ''} {deletingIds.has(upload.id) ? 'opacity-40' : ''}"
+							class="relative aspect-square bg-muted overflow-hidden group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary {selectedIds.has(upload.id) ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : ''} {deletingIds.has(upload.id) ? 'opacity-40' : ''}"
 							onclick={() => handleThumbnailClick(upload)}
 							onpointerdown={() => onPointerDown(upload)}
 							onpointerup={onPointerUp}
@@ -371,19 +367,14 @@
 							<!-- Select overlay -->
 							{#if selectMode}
 								<div
-									class="absolute inset-0 {selectedIds.has(upload.id)
-										? 'bg-primary/20'
-										: 'bg-black/0 group-hover:bg-black/10'} transition-colors"
+									class="absolute inset-0 {selectedIds.has(upload.id) ? 'bg-primary/20' : 'bg-black/0 group-hover:bg-black/10'} transition-colors"
 								></div>
 								<div class="absolute top-1.5 right-1.5">
 									{#if selectedIds.has(upload.id)}
 										<div
 											class="w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-sm"
 										>
-											<CheckCircle2
-												size={16}
-												class="text-primary-foreground"
-											/>
+											<CheckCircle2 size={16} class="text-primary-foreground" />
 										</div>
 									{:else}
 										<div
@@ -435,10 +426,7 @@
 							{#if p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)}
 								<button
 									onclick={() => goToPage(p)}
-									class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium transition-colors {p ===
-									currentPage
-										? 'bg-primary text-primary-foreground'
-										: 'hover:bg-muted text-muted-foreground'}"
+									class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium transition-colors {p === currentPage ? 'bg-primary text-primary-foreground' : 'hover:bg-muted text-muted-foreground'}"
 								>
 									{p}
 								</button>
