@@ -8,10 +8,11 @@
 	import logoLight from "$lib/assets/logo-light.png";
 
 	import { hasSeenOnboarding } from "$lib/stores/onboarding.store";
+	import { auth, authInitialized } from "$lib/stores/auth.store";
 
 	let isMenuOpen = $state(false);
 
-	// Redirect to home or onboarding on native platforms
+	// Redirect logged-in users to /home, or handle native onboarding
 	onMount(async () => {
 		const { Capacitor } = await import("@capacitor/core");
 		if (Capacitor.isNativePlatform()) {
@@ -20,6 +21,12 @@
 			} else {
 				goto("/home");
 			}
+		}
+	});
+
+	$effect(() => {
+		if ($authInitialized && $auth.session) {
+			goto("/home");
 		}
 	});
 

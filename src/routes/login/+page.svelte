@@ -12,6 +12,7 @@
 	let password = $state("");
 	let isLoading = $state(false);
 	let errorMessage = $state("");
+	let resetMessage = $state("");
 
 	onMount(() => {
 		return requireGuest();
@@ -44,6 +45,23 @@
 			await auth.loginWithGoogle();
 		} catch (err: unknown) {
 			errorMessage = err instanceof Error ? err.message : "Google sign-in failed.";
+		}
+	}
+
+	async function handleForgotPassword() {
+		errorMessage = "";
+		resetMessage = "";
+
+		if (!email.trim()) {
+			errorMessage = "Enter your email above to get a reset link.";
+			return;
+		}
+
+		try {
+			await auth.resetPasswordForEmail(email.trim());
+			resetMessage = "Reset link sent. Check your email after the demo.";
+		} catch (err: unknown) {
+			errorMessage = err instanceof Error ? err.message : "Unable to send reset link.";
 		}
 	}
 </script>
@@ -102,7 +120,11 @@
 						class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
 						>Password</label
 					>
-					<button type="button" class="text-sm font-medium text-primary hover:underline"
+					<button
+						type="button"
+						onclick={handleForgotPassword}
+						class="text-sm font-medium text-primary hover:underline"
+					>
 						>Forgot password?</button
 					>
 				</div>
@@ -122,6 +144,10 @@
 
 			{#if errorMessage}
 				<p class="text-sm text-red-500">{errorMessage}</p>
+			{/if}
+
+			{#if resetMessage}
+				<p class="text-sm text-green-600 dark:text-green-400">{resetMessage}</p>
 			{/if}
 
 			<!-- Login button -->

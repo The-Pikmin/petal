@@ -22,6 +22,9 @@ export class WeatherService {
 		try {
 			// Get user's location
 			const location = await this.getUserLocation();
+			if (!location) {
+				return this.getFallbackWeather();
+			}
 
 			// Fetch weather data from Open-Meteo API
 			const weatherResponse = await fetch(
@@ -57,8 +60,7 @@ export class WeatherService {
 						locationName = geoData.countryName;
 					}
 				}
-			} catch (geoError) {
-				console.warn("Reverse geocoding failed:", geoError);
+			} catch {
 				// Fallback to "Current Location" is already set
 			}
 
@@ -70,8 +72,7 @@ export class WeatherService {
 				humidity: weatherData.current.relative_humidity_2m,
 				windSpeed: weatherData.current.wind_speed_10m,
 			};
-		} catch (error) {
-			console.error("Weather fetch error:", error);
+		} catch {
 			// Return default/fallback data
 			return this.getFallbackWeather();
 		}
@@ -81,7 +82,7 @@ export class WeatherService {
 	 * Get user's geolocation using Capacitor Geolocation
 	 * Works on both web and native platforms
 	 */
-	private static async getUserLocation(): Promise<{ latitude: number; longitude: number }> {
+	private static async getUserLocation(): Promise<{ latitude: number; longitude: number } | null> {
 		try {
 			// Dynamically import to avoid issues when running on server
 			const { Geolocation } = await import("@capacitor/geolocation");
@@ -96,10 +97,8 @@ export class WeatherService {
 				latitude: position.coords.latitude,
 				longitude: position.coords.longitude,
 			};
-		} catch (error) {
-			console.warn("Geolocation error:", error);
-			// Default to San Francisco
-			return { latitude: 37.7749, longitude: -122.4194 };
+		} catch {
+			return null;
 		}
 	}
 
@@ -161,7 +160,7 @@ export class WeatherService {
 	private static getFallbackWeather(): WeatherData {
 		return {
 			temperature: 72,
-			location: "Current Location",
+			location: "Weather unavailable",
 			condition: "Partly Cloudy",
 			icon: "⛅",
 			humidity: 65,

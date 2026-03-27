@@ -95,8 +95,8 @@
 				advanced: [{ zoom: value } as any],
 			});
 			zoom = value;
-		} catch (e) {
-			console.error("Failed to set zoom", e);
+		} catch {
+			error = "This device could not adjust zoom right now.";
 		}
 	}
 
@@ -109,8 +109,8 @@
 				advanced: [{ torch: newFlashState } as any],
 			});
 			isFlashOn = newFlashState;
-		} catch (e) {
-			console.error("Failed to toggle flash", e);
+		} catch {
+			error = "Flash controls are not available on this device.";
 		}
 	}
 
@@ -195,6 +195,7 @@
 
 			reader.readAsDataURL(file);
 		}
+		input.value = "";
 	}
 
 	// Pinch to Zoom state

@@ -13,16 +13,22 @@
 	let loading = $state(true);
 
 	onMount(() => {
-		const authUnsub = requireAuth();
+		return requireAuth();
+	});
+
+	$effect(() => {
 		const genus = page.params.genus;
 		const diseaseName = page.params.disease;
 
 		if (!genus || !diseaseName) {
 			error = "Disease not found.";
 			loading = false;
-			return authUnsub;
+			return;
 		}
 
+		loading = true;
+		error = null;
+		disease = null;
 		fetchDiseaseInfo(decodeURIComponent(genus), decodeURIComponent(diseaseName))
 			.then((data) => {
 				disease = data;
@@ -33,8 +39,6 @@
 			.finally(() => {
 				loading = false;
 			});
-
-		return authUnsub;
 	});
 
 	function getUrgencyColor(urgency: string) {
@@ -95,7 +99,7 @@
 				</button>
 			</div>
 		{:else if disease}
-			{@const info = disease.recommended_actions}
+			{@const info = typeof disease.recommended_actions === "string" ? JSON.parse(disease.recommended_actions) : disease.recommended_actions}
 
 			<!-- Title -->
 			<div in:fade={{ duration: 300 }}>

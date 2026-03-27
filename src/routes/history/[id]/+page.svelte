@@ -23,14 +23,20 @@
 	const top3 = $derived(scan ? scan.top_predictions.slice(0, 3) : []);
 
 	onMount(() => {
-		const authUnsub = requireAuth();
+		return requireAuth();
+	});
 
+	$effect(() => {
 		const id = page.params.id;
 		if (!id) {
 			error = "Scan not found.";
 			loading = false;
 			return;
 		}
+		loading = true;
+		error = null;
+		scan = null;
+		diseaseInfo = null;
 		fetchScanById(id)
 			.then(async (data) => {
 				scan = data;
@@ -49,8 +55,6 @@
 			.finally(() => {
 				loading = false;
 			});
-
-		return authUnsub;
 	});
 
 	function formatDate(dateStr: string): string {
@@ -252,7 +256,7 @@
 
 			<!-- Treatment Info (from static_diseases) -->
 			{#if diseaseInfo?.recommended_actions}
-				{@const info = diseaseInfo.recommended_actions}
+				{@const info = typeof diseaseInfo.recommended_actions === "string" ? JSON.parse(diseaseInfo.recommended_actions) : diseaseInfo.recommended_actions}
 
 				<!-- Treatment Steps -->
 				{#if info.treatments?.length}

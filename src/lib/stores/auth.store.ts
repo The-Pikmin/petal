@@ -14,14 +14,14 @@ interface AuthState {
 }
 
 function createAuthStore() {
-	const { subscribe, set, update } = writable<AuthState>({
+	const { subscribe, set } = writable<AuthState>({
 		user: null,
 		session: null,
 		profile: null,
 		initialized: false
 	});
 
-	async function fetchProfile(session: Session): Promise<ApiUser | null> {
+	async function fetchProfile(_session: Session): Promise<ApiUser | null> {
 		try {
 			return await apiFetch<ApiUser>('/me/');
 		} catch {
@@ -119,6 +119,12 @@ function createAuthStore() {
 				provider: 'apple',
 				options: { redirectTo }
 			});
+			if (error) throw new Error(error.message);
+		},
+
+		async resetPasswordForEmail(email: string): Promise<void> {
+			const redirectTo = browser ? `${window.location.origin}/login` : undefined;
+			const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 			if (error) throw new Error(error.message);
 		},
 

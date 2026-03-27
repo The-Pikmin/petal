@@ -5,6 +5,7 @@ import type {
 	PlantIDResult,
 	ScanResultResponse,
 	StaticDiseaseResponse,
+	UploadRecordResponse,
 } from "$lib/types/api.types";
 import type { CapturedPhoto, ScanRecord } from "$lib/types";
 
@@ -38,6 +39,7 @@ export async function identifyPlant(photo: CapturedPhoto): Promise<PlantIDResult
 
 	return {
 		imageUrl: uploadResponse.url,
+		supabasePath: uploadResponse.supabase_path,
 		predictions: predictResponse.predictions,
 		disease: predictResponse.disease ?? null,
 		low_confidence: predictResponse.low_confidence ?? false,
@@ -51,6 +53,7 @@ export async function saveScan(result: PlantIDResult): Promise<void> {
 		method: "POST",
 		body: JSON.stringify({
 			image_url: result.imageUrl,
+			supabase_path: result.supabasePath,
 			plant_name: topPrediction?.name ?? "Unknown",
 			top_predictions: result.predictions,
 			disease_name: result.disease?.disease_name ?? "",
@@ -105,6 +108,22 @@ export async function fetchScanHistory(): Promise<ScanRecord[]> {
 
 export async function fetchScanById(id: string): Promise<ScanResultResponse> {
 	return apiFetch<ScanResultResponse>(`/scans/${id}/`);
+}
+
+export async function deleteScan(id: string): Promise<void> {
+	await apiFetch(`/scans/${id}/`, {
+		method: "DELETE",
+	});
+}
+
+export async function fetchUploads(): Promise<UploadRecordResponse[]> {
+	return apiFetch<UploadRecordResponse[]>("/images/list/");
+}
+
+export async function deleteUpload(id: number): Promise<void> {
+	await apiFetch(`/images/${id}/`, {
+		method: "DELETE",
+	});
 }
 
 export async function fetchAllDiseases(): Promise<StaticDiseaseResponse[]> {

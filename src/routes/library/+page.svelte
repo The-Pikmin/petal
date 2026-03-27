@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 	import type { StaticDiseaseResponse } from "$lib/types/api.types";
 	import { fetchAllDiseases } from "$lib/services/scan.service";
 	import { Search, AlertCircle } from "lucide-svelte";
@@ -17,11 +18,21 @@
 	let selectedGenus = $state<string>("all");
 
 	onMount(() => {
-		const authUnsub = requireAuth();
+		return requireAuth();
+	});
 
+	function loadDiseases() {
+		loading = true;
+		error = null;
 		fetchAllDiseases()
 			.then((data) => {
-				diseases = data;
+				diseases = data.map((d) => ({
+					...d,
+					recommended_actions:
+						typeof d.recommended_actions === "string"
+							? JSON.parse(d.recommended_actions)
+							: d.recommended_actions,
+				}));
 			})
 			.catch(() => {
 				error = "Failed to load disease library.";
@@ -29,8 +40,14 @@
 			.finally(() => {
 				loading = false;
 			});
+	}
 
-		return authUnsub;
+	$effect(() => {
+		const url = page.url;
+		const initialQuery = url.searchParams.get("q")?.trim() ?? "";
+		searchQuery = initialQuery;
+		isSearchOpen = initialQuery.length > 0;
+		loadDiseases();
 	});
 
 	const genera = $derived.by(() => {
