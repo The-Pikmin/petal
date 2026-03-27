@@ -6,6 +6,7 @@ import type {
 	ScanResultResponse,
 	StaticDiseaseResponse,
 	UploadRecordResponse,
+	PaginatedUploads,
 } from "$lib/types/api.types";
 import type { CapturedPhoto, ScanRecord } from "$lib/types";
 
@@ -126,8 +127,11 @@ export async function deleteScan(id: string): Promise<void> {
 	});
 }
 
-export async function fetchUploads(): Promise<UploadRecordResponse[]> {
-	return apiFetch<UploadRecordResponse[]>("/images/list/");
+export async function fetchUploads(
+	page: number = 1,
+	pageSize: number = 24,
+): Promise<PaginatedUploads> {
+	return apiFetch<PaginatedUploads>(`/images/list/?page=${page}&page_size=${pageSize}`);
 }
 
 export async function deleteUpload(id: number): Promise<void> {

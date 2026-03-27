@@ -12,21 +12,16 @@
 
 	let isMenuOpen = $state(false);
 
-	// Redirect logged-in users to /home, or handle native onboarding
-	onMount(async () => {
-		const { Capacitor } = await import("@capacitor/core");
-		if (Capacitor.isNativePlatform()) {
-			if (!$hasSeenOnboarding) {
-				goto("/onboarding");
-			} else {
-				goto("/home");
-			}
-		}
-	});
-
+	// Redirect logged-in users: onboarding on native, /home on web
 	$effect(() => {
 		if ($authInitialized && $auth.session) {
-			goto("/home");
+			import("@capacitor/core").then(({ Capacitor }) => {
+				if (Capacitor.isNativePlatform()) {
+					goto("/onboarding");
+				} else {
+					goto("/home");
+				}
+			});
 		}
 	});
 

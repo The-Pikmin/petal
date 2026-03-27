@@ -99,7 +99,10 @@
 				</button>
 			</div>
 		{:else if disease}
-			{@const info = typeof disease.recommended_actions === "string" ? JSON.parse(disease.recommended_actions) : disease.recommended_actions}
+			{@const info =
+				typeof disease.recommended_actions === "string"
+					? JSON.parse(disease.recommended_actions)
+					: disease.recommended_actions}
 
 			<!-- Title -->
 			<div in:fade={{ duration: 300 }}>

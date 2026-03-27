@@ -22,6 +22,14 @@ export interface UploadRecordResponse {
 	in_use: boolean;
 }
 
+export interface PaginatedUploads {
+	results: UploadRecordResponse[];
+	total: number;
+	page: number;
+	page_size: number;
+	total_pages: number;
+}
+
 // === Prediction ===
 export interface PredictRequest {
 	image_url: string;

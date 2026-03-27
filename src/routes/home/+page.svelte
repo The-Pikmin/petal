@@ -285,82 +285,106 @@
 					<HamburgerMenu />
 				</div>
 			</div>
-
-			</div>
-		</header>
+		</div>
+	</header>
 
 	<main class="px-6 py-6 space-y-8 pb-24">
 		{#if !$isSplashVisible && showContent}
-				<div class="container-responsive desktop-main-layout space-y-8 lg:space-y-0">
-					<!-- Left Column (Desktop) -->
-					<div class="space-y-8 lg:col-start-1 lg:row-start-1">
-						<!-- Stats Strip -->
-						<div
-							class="rounded-3xl border border-border bg-card p-4 shadow-sm"
-							in:fly={{ y: 20, duration: 400, delay: 40 }}
-						>
-							<div class="mb-3 flex items-center justify-between">
-								<div>
-									<p class="text-sm font-semibold text-foreground">Your snapshot</p>
-									<p class="text-xs text-muted-foreground">Quick activity overview</p>
-								</div>
-							</div>
-							<div class="grid grid-cols-3 gap-3">
-								<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
-									<div class="mb-2 flex justify-center text-sky-600 dark:text-sky-400">
-										<History size={16} />
-									</div>
-									<p class="text-lg font-bold text-foreground">{Math.round($totalScans)}</p>
-									<p class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-										Scans
-									</p>
-								</div>
-								<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
-									<div class="mb-2 flex justify-center text-emerald-600 dark:text-emerald-400">
-										<Leaf size={16} />
-									</div>
-									<p class="text-lg font-bold text-foreground">{Math.round($plantsSaved)}</p>
-									<p class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-										Plants
-									</p>
-								</div>
-								<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
-									<div class="mb-2 flex justify-center text-amber-600 dark:text-amber-400">
-										<AlertCircle size={16} />
-									</div>
-									<p class="text-lg font-bold text-foreground">{Math.round($diseasesIdentified)}</p>
-									<p class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-										Alerts
-									</p>
-								</div>
+			<div class="container-responsive desktop-main-layout space-y-8 lg:space-y-0">
+				<!-- Left Column (Desktop) -->
+				<div class="space-y-8 lg:col-start-1 lg:row-start-1">
+					<!-- Stats Strip -->
+					<div
+						class="rounded-3xl border border-border bg-card p-4 shadow-sm"
+						in:fly={{ y: 20, duration: 400, delay: 40 }}
+					>
+						<div class="mb-3 flex items-center justify-between">
+							<div>
+								<p class="text-sm font-semibold text-foreground">Your snapshot</p>
+								<p class="text-xs text-muted-foreground">Quick activity overview</p>
 							</div>
 						</div>
+						<div class="grid grid-cols-3 gap-3">
+							<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
+								<div
+									class="mb-2 flex justify-center text-sky-600 dark:text-sky-400"
+								>
+									<History size={16} />
+								</div>
+								<p class="text-lg font-bold text-foreground">
+									{Math.round($totalScans)}
+								</p>
+								<p
+									class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground"
+								>
+									Scans
+								</p>
+							</div>
+							<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
+								<div
+									class="mb-2 flex justify-center text-emerald-600 dark:text-emerald-400"
+								>
+									<Leaf size={16} />
+								</div>
+								<p class="text-lg font-bold text-foreground">
+									{Math.round($plantsSaved)}
+								</p>
+								<p
+									class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground"
+								>
+									Plants
+								</p>
+							</div>
+							<div class="rounded-2xl bg-secondary/60 px-3 py-4 text-center">
+								<div
+									class="mb-2 flex justify-center text-amber-600 dark:text-amber-400"
+								>
+									<AlertCircle size={16} />
+								</div>
+								<p class="text-lg font-bold text-foreground">
+									{Math.round($diseasesIdentified)}
+								</p>
+								<p
+									class="mt-1 text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground"
+								>
+									Alerts
+								</p>
+							</div>
+						</div>
+					</div>
 
-						<!-- Primary Action -->
-						<section
-							class="rounded-[2rem] overflow-hidden border border-primary/15 bg-[linear-gradient(135deg,rgba(34,197,94,0.18),rgba(34,197,94,0.05))] p-6 shadow-sm"
-							in:fade={{ duration: 300, delay: 80 }}
+					<!-- Primary Action -->
+					<section
+						class="rounded-[2rem] overflow-hidden border border-primary/15 bg-[linear-gradient(135deg,rgba(34,197,94,0.18),rgba(34,197,94,0.05))] p-6 shadow-sm"
+						in:fade={{ duration: 300, delay: 80 }}
+					>
+						<div
+							class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
 						>
-							<div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-								<div>
-									<p class="text-xs font-bold uppercase tracking-[0.24em] text-primary/80">
-										Next Step
-									</p>
+							<div>
+								<p
+									class="text-xs font-bold uppercase tracking-[0.24em] text-primary/80"
+								>
+									Next Step
+								</p>
 								<h3 class="mt-2 text-2xl font-bold text-foreground">
 									Scan a plant and catch issues early
 								</h3>
 								<p class="mt-2 text-sm leading-relaxed text-muted-foreground">
-									Upload a photo to identify the plant, review disease risks, and save the result to your history.
+									Upload a photo to identify the plant, review disease risks, and
+									save the result to your history.
 								</p>
 							</div>
-								<div class="w-fit rounded-2xl bg-background/80 p-3 text-primary shadow-sm">
-									<Camera size={24} />
-								</div>
+							<div
+								class="w-fit rounded-2xl bg-background/80 p-3 text-primary shadow-sm"
+							>
+								<Camera size={24} />
 							</div>
-							<div class="mt-5 flex gap-3">
-								<button
-									onclick={() => goto("/camera")}
-									class="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+						</div>
+						<div class="mt-5 flex gap-3">
+							<button
+								onclick={() => goto("/camera")}
+								class="flex-1 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
 							>
 								Scan Plant
 							</button>
@@ -380,10 +404,14 @@
 					>
 						<div>
 							<div>
-								<p class="text-xs font-bold uppercase tracking-[0.28em] text-primary/80">
+								<p
+									class="text-xs font-bold uppercase tracking-[0.28em] text-primary/80"
+								>
 									Garden Forecast
 								</p>
-								<h3 class="mt-2 text-xl font-bold text-foreground">Today's conditions</h3>
+								<h3 class="mt-2 text-xl font-bold text-foreground">
+									Today's conditions
+								</h3>
 								<p class="mt-1 text-sm text-muted-foreground">
 									Local weather with plant-specific watchouts
 								</p>
@@ -392,24 +420,39 @@
 
 						{#if weather}
 							{@const Icon = getWeatherIcon(weather.condition)}
-								<div class="mt-5 rounded-[1.75rem] bg-secondary/45 p-5" in:fade={{ duration: 300 }}>
-									<div class="flex items-start justify-between gap-4">
-										<div>
-											<p class="text-4xl font-bold text-foreground">{weather.temperature}°F</p>
-											<p class="mt-1 text-sm text-muted-foreground">{weather.location}</p>
+							<div
+								class="mt-5 rounded-[1.75rem] bg-secondary/45 p-5"
+								in:fade={{ duration: 300 }}
+							>
+								<div class="flex items-start justify-between gap-4">
+									<div>
+										<p class="text-4xl font-bold text-foreground">
+											{weather.temperature}°F
+										</p>
+										<p class="mt-1 text-sm text-muted-foreground">
+											{weather.location}
+										</p>
 									</div>
-									<div class="text-primary {getWeatherAnimation(weather.condition)}">
+									<div
+										class="text-primary {getWeatherAnimation(
+											weather.condition
+										)}"
+									>
 										<Icon size={48} />
 									</div>
 								</div>
 								<div class="mt-4 flex flex-wrap items-center gap-2">
-									<span class="rounded-full bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm">
+									<span
+										class="rounded-full bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm"
+									>
 										{weather.condition}
 									</span>
 									<span
 										class="rounded-full bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm"
 									>
-										{weather.humidity ? `${weather.humidity}% humidity` : "Local weather"}
+										{weather.humidity
+											? `${weather.humidity}% humidity`
+											: "Local weather"}
 									</span>
 									{#if weather.isStale}
 										<span
@@ -422,17 +465,26 @@
 							</div>
 
 							{#if weather.isStale}
-								<div class="mt-4 rounded-[1.5rem] border border-dashed border-border bg-secondary/25 p-4">
-									<p class="text-sm font-medium text-foreground">Plant risks paused for now</p>
+								<div
+									class="mt-4 rounded-[1.5rem] border border-dashed border-border bg-secondary/25 p-4"
+								>
+									<p class="text-sm font-medium text-foreground">
+										Plant risks paused for now
+									</p>
 									<p class="mt-1 text-sm text-muted-foreground">
-										We’ll refresh disease alerts when live weather is available again.
+										We’ll refresh disease alerts when live weather is available
+										again.
 									</p>
 								</div>
 							{:else if weatherRisks.length > 0}
 								<div class="mt-5 space-y-3">
-									<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+									<div
+										class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+									>
 										<div class="flex flex-wrap items-center gap-2">
-											<p class="whitespace-nowrap text-sm font-semibold text-foreground">
+											<p
+												class="whitespace-nowrap text-sm font-semibold text-foreground"
+											>
 												Plant risk today
 											</p>
 											<div
@@ -441,7 +493,9 @@
 												{weatherRisks.length} active
 											</div>
 										</div>
-										<p class="text-xs uppercase tracking-[0.18em] text-muted-foreground sm:text-right">
+										<p
+											class="text-xs uppercase tracking-[0.18em] text-muted-foreground sm:text-right"
+										>
 											Tap to open in library
 										</p>
 									</div>
@@ -459,7 +513,9 @@
 													<alert.icon size={20} />
 												</div>
 												<div class="min-w-0 flex-1">
-													<div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+													<div
+														class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+													>
 														<p class="font-semibold">{alert.title}</p>
 														<span
 															class="inline-flex w-fit whitespace-nowrap rounded-full bg-background/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em]"
@@ -467,7 +523,9 @@
 															{alert.tone}
 														</span>
 													</div>
-													<p class="mt-1 text-sm opacity-90">{alert.condition}</p>
+													<p class="mt-1 text-sm opacity-90">
+														{alert.condition}
+													</p>
 													<p class="mt-3 text-sm font-medium">
 														Watch for: {alert.diseases.join(", ")}
 													</p>
@@ -477,10 +535,15 @@
 									{/each}
 								</div>
 							{:else}
-								<div class="mt-4 rounded-[1.5rem] border border-border bg-secondary/25 p-4">
-									<p class="text-sm font-medium text-foreground">No elevated plant risks today</p>
+								<div
+									class="mt-4 rounded-[1.5rem] border border-border bg-secondary/25 p-4"
+								>
+									<p class="text-sm font-medium text-foreground">
+										No elevated plant risks today
+									</p>
 									<p class="mt-1 text-sm text-muted-foreground">
-										Conditions look fairly stable for common garden diseases right now.
+										Conditions look fairly stable for common garden diseases
+										right now.
 									</p>
 								</div>
 							{/if}
@@ -488,10 +551,14 @@
 							<div class="mt-5 rounded-[1.75rem] bg-secondary/45 p-5">
 								<div class="flex items-center justify-between">
 									<div class="flex-1">
-										<div class="mb-2 h-10 w-24 animate-pulse rounded-lg bg-muted"></div>
+										<div
+											class="mb-2 h-10 w-24 animate-pulse rounded-lg bg-muted"
+										></div>
 										<div class="h-5 w-32 animate-pulse rounded bg-muted"></div>
 									</div>
-									<div class="h-12 w-12 animate-pulse rounded-full bg-muted"></div>
+									<div
+										class="h-12 w-12 animate-pulse rounded-full bg-muted"
+									></div>
 								</div>
 								<div class="mt-4 flex gap-2">
 									<div class="h-9 w-28 animate-pulse rounded-full bg-muted"></div>
@@ -510,10 +577,12 @@
 				<div class="space-y-6 lg:col-start-2 lg:row-start-1">
 					<!-- Recent Scans Section -->
 					<section class="space-y-4">
-							<div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-								<div>
-									<h2
-										class="text-xl font-bold text-foreground"
+						<div
+							class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
+						>
+							<div>
+								<h2
+									class="text-xl font-bold text-foreground"
 									in:fly={{ y: 20, duration: 400, delay: 260 }}
 								>
 									Recent Scans
@@ -529,41 +598,41 @@
 								View all <ChevronRight size={16} />
 							</button>
 						</div>
-					{#if recentScans.length > 0}
-						<section>
-							<div class="space-y-3">
-								{#each recentScans.slice(0, 3) as scan, i}
-									<div
-										class="flex items-center gap-4 p-3 rounded-2xl bg-card border border-border shadow-sm"
-										in:fly|global={{
-											x: 20,
-											duration: 400,
-											delay: 450 + i * 50,
-										}}
-									>
+						{#if recentScans.length > 0}
+							<section>
+								<div class="space-y-3">
+									{#each recentScans.slice(0, 3) as scan, i}
 										<div
-											class="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0"
+											class="flex items-center gap-4 p-3 rounded-2xl bg-card border border-border shadow-sm"
+											in:fly|global={{
+												x: 20,
+												duration: 400,
+												delay: 450 + i * 50,
+											}}
 										>
-											{#if scan.imageUrl}
-												<img
-													src={scan.imageUrl}
-													alt="Scan"
-													class="w-full h-full object-cover"
-												/>
-											{:else if scan.photo.base64}
-												<img
-													src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
-													alt="Scan"
-													class="w-full h-full object-cover"
-												/>
-											{:else}
-												<div
-													class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
-												>
-													<Leaf size={24} class="text-primary" />
-												</div>
-											{/if}
-										</div>
+											<div
+												class="w-16 h-16 rounded-xl bg-muted overflow-hidden flex-shrink-0"
+											>
+												{#if scan.imageUrl}
+													<img
+														src={scan.imageUrl}
+														alt="Scan"
+														class="w-full h-full object-cover"
+													/>
+												{:else if scan.photo.base64}
+													<img
+														src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
+														alt="Scan"
+														class="w-full h-full object-cover"
+													/>
+												{:else}
+													<div
+														class="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center"
+													>
+														<Leaf size={24} class="text-primary" />
+													</div>
+												{/if}
+											</div>
 											<div class="flex-1 min-w-0">
 												<h4 class="font-semibold truncate">
 													{scan.plantName || "Saved scan"}
@@ -578,30 +647,33 @@
 												onclick={() => goto("/history/" + scan.id)}
 												class="p-2 hover:bg-muted rounded-full transition-colors"
 											>
-												<ChevronRight size={16} class="text-muted-foreground" />
+												<ChevronRight
+													size={16}
+													class="text-muted-foreground"
+												/>
 											</button>
+										</div>
+									{/each}
+								</div>
+							</section>
+						{:else}
+							<div
+								class="rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm"
+								in:fly={{ y: 20, duration: 400, delay: 300 }}
+							>
+								<div class="flex items-center gap-3">
+									<div class="rounded-2xl bg-primary/10 p-3 text-primary">
+										<Camera size={20} />
 									</div>
-								{/each}
-							</div>
-						</section>
-					{:else}
-						<div
-							class="rounded-3xl border border-border bg-card p-5 text-card-foreground shadow-sm"
-							in:fly={{ y: 20, duration: 400, delay: 300 }}
-						>
-							<div class="flex items-center gap-3">
-								<div class="rounded-2xl bg-primary/10 p-3 text-primary">
-									<Camera size={20} />
-								</div>
-								<div>
-									<p class="font-semibold text-foreground">No scans yet</p>
-									<p class="text-sm text-muted-foreground">
-										Take your first plant scan to start building history.
-									</p>
+									<div>
+										<p class="font-semibold text-foreground">No scans yet</p>
+										<p class="text-sm text-muted-foreground">
+											Take your first plant scan to start building history.
+										</p>
+									</div>
 								</div>
 							</div>
-						</div>
-					{/if}
+						{/if}
 
 						<!-- Daily Tip -->
 						<div

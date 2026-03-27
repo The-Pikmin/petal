@@ -5,7 +5,15 @@
 	import type { PlantIDResult } from "$lib/types/api.types";
 	import { identifyPlant, saveScan } from "$lib/services/scan.service";
 	import { requireAuth } from "$lib/guards/auth.guard";
-	import { CheckCircle, Home, Camera, Save, AlertCircle, Leaf, LoaderCircle } from "lucide-svelte";
+	import {
+		CheckCircle,
+		Home,
+		Camera,
+		Save,
+		AlertCircle,
+		Leaf,
+		LoaderCircle,
+	} from "lucide-svelte";
 	import { fade, fly } from "svelte/transition";
 	import PlantGrowingLoader from "$lib/components/PlantGrowingLoader.svelte";
 

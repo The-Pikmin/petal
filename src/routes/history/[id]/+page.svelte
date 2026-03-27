@@ -275,7 +275,10 @@
 
 			<!-- Treatment Info (from static_diseases) -->
 			{#if diseaseInfo?.recommended_actions}
-				{@const info = typeof diseaseInfo.recommended_actions === "string" ? JSON.parse(diseaseInfo.recommended_actions) : diseaseInfo.recommended_actions}
+				{@const info =
+					typeof diseaseInfo.recommended_actions === "string"
+						? JSON.parse(diseaseInfo.recommended_actions)
+						: diseaseInfo.recommended_actions}
 
 				<!-- Treatment Steps -->
 				{#if info.treatments?.length}

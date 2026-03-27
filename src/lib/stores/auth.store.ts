@@ -1,10 +1,11 @@
-import { writable, derived } from 'svelte/store';
-import { browser } from '$app/environment';
-import { Capacitor } from '@capacitor/core';
-import type { Session } from '@supabase/supabase-js';
-import type { ApiUser } from '$lib/types/api.types';
-import { supabase } from '$lib/services/supabase';
-import { apiFetch } from '$lib/services/api';
+import { writable, derived } from "svelte/store";
+import { browser } from "$app/environment";
+import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
+import type { Session } from "@supabase/supabase-js";
+import type { ApiUser } from "$lib/types/api.types";
+import { supabase } from "$lib/services/supabase";
+import { apiFetch } from "$lib/services/api";
 
 interface AuthState {
 	user: ApiUser | null;
@@ -18,12 +19,12 @@ function createAuthStore() {
 		user: null,
 		session: null,
 		profile: null,
-		initialized: false
+		initialized: false,
 	});
 
 	async function fetchProfile(_session: Session): Promise<ApiUser | null> {
 		try {
-			return await apiFetch<ApiUser>('/me/');
+			return await apiFetch<ApiUser>("/me/");
 		} catch {
 			return null;
 		}
@@ -36,7 +37,7 @@ function createAuthStore() {
 			if (!browser) return;
 
 			const {
-				data: { session }
+				data: { session },
 			} = await supabase.auth.getSession();
 
 			if (session) {
@@ -45,7 +46,7 @@ function createAuthStore() {
 					user,
 					session,
 					profile: user ? { username: user.username, email: user.email } : null,
-					initialized: true
+					initialized: true,
 				});
 			} else {
 				set({ user: null, session: null, profile: null, initialized: true });
@@ -58,7 +59,7 @@ function createAuthStore() {
 						user,
 						session,
 						profile: user ? { username: user.username, email: user.email } : null,
-						initialized: true
+						initialized: true,
 					});
 				} else {
 					set({ user: null, session: null, profile: null, initialized: true });
@@ -76,17 +77,13 @@ function createAuthStore() {
 			// onAuthStateChange will update the store
 		},
 
-		async signUpWithEmail(
-			email: string,
-			password: string,
-			username?: string
-		): Promise<void> {
+		async signUpWithEmail(email: string, password: string, username?: string): Promise<void> {
 			const { error } = await supabase.auth.signUp({
 				email,
 				password,
 				options: {
-					data: username ? { username } : undefined
-				}
+					data: username ? { username } : undefined,
+				},
 			});
 			if (error) {
 				const err = new Error(error.message);
@@ -97,29 +94,37 @@ function createAuthStore() {
 		},
 
 		async loginWithGoogle(): Promise<void> {
-			const redirectTo = Capacitor.isNativePlatform()
-				? 'com.greeneye.app://login-callback'
+			const isNative = Capacitor.isNativePlatform();
+			const redirectTo = isNative
+				? "com.greeneye.app://login-callback"
 				: browser
 					? `${window.location.origin}/home`
 					: undefined;
-			const { error } = await supabase.auth.signInWithOAuth({
-				provider: 'google',
-				options: { redirectTo }
+			const { data, error } = await supabase.auth.signInWithOAuth({
+				provider: "google",
+				options: { redirectTo, skipBrowserRedirect: isNative },
 			});
 			if (error) throw new Error(error.message);
+			if (isNative && data.url) {
+				await Browser.open({ url: data.url });
+			}
 		},
 
 		async loginWithApple(): Promise<void> {
-			const redirectTo = Capacitor.isNativePlatform()
-				? 'com.greeneye.app://login-callback'
+			const isNative = Capacitor.isNativePlatform();
+			const redirectTo = isNative
+				? "com.greeneye.app://login-callback"
 				: browser
 					? `${window.location.origin}/home`
 					: undefined;
-			const { error } = await supabase.auth.signInWithOAuth({
-				provider: 'apple',
-				options: { redirectTo }
+			const { data, error } = await supabase.auth.signInWithOAuth({
+				provider: "apple",
+				options: { redirectTo, skipBrowserRedirect: isNative },
 			});
 			if (error) throw new Error(error.message);
+			if (isNative && data.url) {
+				await Browser.open({ url: data.url });
+			}
 		},
 
 		async resetPasswordForEmail(email: string): Promise<void> {
@@ -131,7 +136,7 @@ function createAuthStore() {
 		async logout(): Promise<void> {
 			await supabase.auth.signOut();
 			set({ user: null, session: null, profile: null, initialized: true });
-		}
+		},
 	};
 }
 

@@ -176,9 +176,12 @@
 
 	$effect(() => {
 		if (!statusMessage) return;
-		const timeoutId = window.setTimeout(() => {
-			statusMessage = "";
-		}, statusTone === "success" ? 3200 : 4200);
+		const timeoutId = window.setTimeout(
+			() => {
+				statusMessage = "";
+			},
+			statusTone === "success" ? 3200 : 4200
+		);
 
 		return () => window.clearTimeout(timeoutId);
 	});
@@ -200,7 +203,10 @@
 		<div class="container-responsive space-y-4">
 			<div class="flex items-center justify-between">
 				{#if isSearchOpen}
-					<div class="flex flex-1 items-center gap-2 mr-3" in:fly={{ x: 24, duration: 250 }}>
+					<div
+						class="flex flex-1 items-center gap-2 mr-3"
+						in:fly={{ x: 24, duration: 250 }}
+					>
 						<div class="relative flex-1">
 							<Search
 								class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -239,7 +245,8 @@
 								<span
 									class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/10 px-1.5 text-[11px] font-bold text-primary"
 								>
-									{Number(sortOption !== "newest") + Number(severityFilter !== "all")}
+									{Number(sortOption !== "newest") +
+										Number(severityFilter !== "all")}
 								</span>
 							{/if}
 							<ChevronDown
@@ -274,7 +281,9 @@
 					>
 						<div class="space-y-3">
 							<div class="space-y-2">
-								<p class="px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+								<p
+									class="px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
+								>
 									Sort
 								</p>
 								<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -309,13 +318,16 @@
 							</div>
 
 							<div class="space-y-2">
-								<p class="px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+								<p
+									class="px-1 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground"
+								>
 									Severity
 								</p>
 								<div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
 									{#each ["all", "low", "medium", "high", "critical"] as filter}
 										<button
-											onclick={() => (severityFilter = filter as SeverityFilter)}
+											onclick={() =>
+												(severityFilter = filter as SeverityFilter)}
 											class="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors {severityFilter ===
 											filter
 												? 'bg-secondary text-secondary-foreground border border-primary/20 shadow-sm'
@@ -367,7 +379,9 @@
 									<div class="h-6 w-20 rounded-full bg-muted"></div>
 								</div>
 							</div>
-							<div class="mt-4 border-t border-border pt-4 flex items-center justify-between">
+							<div
+								class="mt-4 border-t border-border pt-4 flex items-center justify-between"
+							>
 								<div class="h-3 w-20 rounded bg-muted"></div>
 								<div class="h-9 w-24 rounded-full bg-muted"></div>
 							</div>
@@ -376,7 +390,9 @@
 				</div>
 			{:else if scanHistory.length === 0}
 				<div class="flex flex-col items-center justify-center py-16">
-					<div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
+					<div
+						class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4"
+					>
 						<Camera size={40} class="text-muted-foreground" />
 					</div>
 					<h3 class="text-lg font-semibold mb-2">No scans yet</h3>
@@ -392,7 +408,9 @@
 				</div>
 			{:else if filteredHistory.length === 0}
 				<div class="flex flex-col items-center justify-center py-16 text-center">
-					<div class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
+					<div
+						class="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4"
+					>
 						<Clock3 size={40} class="text-muted-foreground" />
 					</div>
 					<h3 class="text-lg font-semibold mb-2">No matching scans</h3>
@@ -422,7 +440,9 @@
 								class="w-full text-left hover:scale-[1.01] active:scale-[0.99] transition-transform"
 							>
 								<div class="flex gap-4 h-full">
-									<div class="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0">
+									<div
+										class="w-20 h-20 rounded-2xl overflow-hidden bg-muted flex-shrink-0"
+									>
 										{#if scan.imageUrl}
 											<img
 												src={scan.imageUrl}
@@ -455,7 +475,9 @@
 													{getDisplayPlantName(scan)}
 												</h3>
 												{#if getScientificLabel(scan)}
-													<p class="text-xs italic text-muted-foreground truncate">
+													<p
+														class="text-xs italic text-muted-foreground truncate"
+													>
 														{getScientificLabel(scan)}
 													</p>
 												{/if}
@@ -485,8 +507,12 @@
 								</div>
 							</button>
 
-							<div class="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4">
-								<div class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+							<div
+								class="mt-4 flex items-center justify-between gap-3 border-t border-border pt-4"
+							>
+								<div
+									class="flex items-center gap-2 text-xs font-medium text-muted-foreground"
+								>
 									<Clock3 size={14} />
 									<span>{formatDate(scan.timestamp)}</span>
 								</div>

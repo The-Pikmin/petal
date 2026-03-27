@@ -52,8 +52,16 @@
 		{
 			title: "Account",
 			items: [
-					{ icon: User, label: "Edit Profile", action: () => showComingSoon("Profile editing") },
-					{ icon: Mail, label: "Email & Password", action: () => showComingSoon("Password settings") },
+				{
+					icon: User,
+					label: "Edit Profile",
+					action: () => showComingSoon("Profile editing"),
+				},
+				{
+					icon: Mail,
+					label: "Email & Password",
+					action: () => showComingSoon("Password settings"),
+				},
 			],
 		},
 		{
@@ -76,15 +84,31 @@
 		{
 			title: "Privacy & Security",
 			items: [
-				{ icon: Shield, label: "Data & Privacy", action: () => showComingSoon("Privacy controls") },
-				{ icon: Shield, label: "Terms of Service", action: () => showComingSoon("Terms of Service") },
+				{
+					icon: Shield,
+					label: "Data & Privacy",
+					action: () => showComingSoon("Privacy controls"),
+				},
+				{
+					icon: Shield,
+					label: "Terms of Service",
+					action: () => showComingSoon("Terms of Service"),
+				},
 			],
 		},
 		{
 			title: "Support",
 			items: [
-				{ icon: HelpCircle, label: "Help & FAQs", action: () => showComingSoon("Help center") },
-				{ icon: Info, label: "About GreenEye", action: () => showComingSoon("About GreenEye") },
+				{
+					icon: HelpCircle,
+					label: "Help & FAQs",
+					action: () => showComingSoon("Help center"),
+				},
+				{
+					icon: Info,
+					label: "About GreenEye",
+					action: () => showComingSoon("About GreenEye"),
+				},
 			],
 		},
 	];

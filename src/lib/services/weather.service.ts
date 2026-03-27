@@ -98,7 +98,10 @@ export class WeatherService {
 	 * Get user's geolocation using Capacitor Geolocation
 	 * Works on both web and native platforms
 	 */
-	private static async getUserLocation(): Promise<{ latitude: number; longitude: number } | null> {
+	private static async getUserLocation(): Promise<{
+		latitude: number;
+		longitude: number;
+	} | null> {
 		try {
 			// Dynamically import to avoid issues when running on server
 			const { Geolocation } = await import("@capacitor/geolocation");

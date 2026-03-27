@@ -30,7 +30,6 @@
 
 <div class="loader-root" class:mounted>
 	<svg viewBox="0 0 200 320" xmlns="http://www.w3.org/2000/svg" class="plant-svg">
-
 		<!-- Pot -->
 		<path d="M72,270 L68,300 L132,300 L128,270 Z" class="pot-body" />
 		<rect x="64" y="264" width="72" height="10" rx="3" class="pot-rim" />
@@ -48,10 +47,7 @@
 
 		<!-- Leaf pair 1 (lowest) -->
 		<g class="leaf leaf-1-left" style="transform-origin: 100px 215px">
-			<path
-				d="M100,215 C85,205 65,210 55,200 C62,195 80,190 100,208"
-				class="leaf-shape"
-			/>
+			<path d="M100,215 C85,205 65,210 55,200 C62,195 80,190 100,208" class="leaf-shape" />
 			<path d="M100,213 C88,207 72,208 60,202" class="leaf-vein" />
 		</g>
 		<g class="leaf leaf-1-right" style="transform-origin: 100px 215px">
@@ -145,10 +141,18 @@
 	}
 
 	/* --- Pot --- */
-	.pot-body { fill: hsl(20, 55%, 48%); }
-	.pot-rim  { fill: hsl(20, 55%, 42%); }
-	.pot-base { fill: hsl(20, 55%, 38%); }
-	.soil     { fill: hsl(30, 40%, 28%); }
+	.pot-body {
+		fill: hsl(20, 55%, 48%);
+	}
+	.pot-rim {
+		fill: hsl(20, 55%, 42%);
+	}
+	.pot-base {
+		fill: hsl(20, 55%, 38%);
+	}
+	.soil {
+		fill: hsl(30, 40%, 28%);
+	}
 
 	/* ================================================================
 	   STEM  – draws up then retracts
@@ -166,11 +170,21 @@
 	}
 
 	@keyframes stem-cycle {
-		0%        { stroke-dashoffset: 220; }
-		28%       { stroke-dashoffset: 0; }
-		55%       { stroke-dashoffset: 0; }
-		83%       { stroke-dashoffset: 220; }
-		100%      { stroke-dashoffset: 220; }
+		0% {
+			stroke-dashoffset: 220;
+		}
+		28% {
+			stroke-dashoffset: 0;
+		}
+		55% {
+			stroke-dashoffset: 0;
+		}
+		83% {
+			stroke-dashoffset: 220;
+		}
+		100% {
+			stroke-dashoffset: 220;
+		}
 	}
 
 	.stem-group {
@@ -180,20 +194,41 @@
 		animation: stem-sway 7s ease-in-out infinite;
 	}
 	@keyframes stem-sway {
-		0%, 28%   { transform: rotate(0deg); }
-		36%       { transform: rotate(0.8deg); }
-		44%       { transform: rotate(-0.5deg); }
-		52%       { transform: rotate(0.3deg); }
-		55%       { transform: rotate(0deg); }
-		83%, 100% { transform: rotate(0deg); }
+		0%,
+		28% {
+			transform: rotate(0deg);
+		}
+		36% {
+			transform: rotate(0.8deg);
+		}
+		44% {
+			transform: rotate(-0.5deg);
+		}
+		52% {
+			transform: rotate(0.3deg);
+		}
+		55% {
+			transform: rotate(0deg);
+		}
+		83%,
+		100% {
+			transform: rotate(0deg);
+		}
 	}
 
 	/* ================================================================
 	   LEAVES – shared base styles
 	   ================================================================ */
-	.leaf-shape     { fill: hsl(130, 52%, 50%); opacity: 0.92; }
-	.leaf-shape-mid { fill: hsl(135, 52%, 48%); }
-	.leaf-shape-top { fill: hsl(140, 55%, 52%); }
+	.leaf-shape {
+		fill: hsl(130, 52%, 50%);
+		opacity: 0.92;
+	}
+	.leaf-shape-mid {
+		fill: hsl(135, 52%, 48%);
+	}
+	.leaf-shape-top {
+		fill: hsl(140, 55%, 52%);
+	}
 	.leaf-vein {
 		fill: none;
 		stroke: hsl(130, 40%, 38%);
@@ -217,98 +252,314 @@
 	 */
 
 	/* --- Pair 1 (lowest, earliest) --- */
-	.mounted .leaf-1-left  { animation: l1l 7s ease-in-out infinite; }
-	.mounted .leaf-1-right { animation: l1r 7s ease-in-out infinite; }
+	.mounted .leaf-1-left {
+		animation: l1l 7s ease-in-out infinite;
+	}
+	.mounted .leaf-1-right {
+		animation: l1r 7s ease-in-out infinite;
+	}
 
 	@keyframes l1l {
-		0%, 13%   { transform: scale(0) rotate(30deg); opacity: 0; }
-		22%       { transform: scale(1.12) rotate(-5deg); opacity: 1; }
-		26%       { transform: scale(0.96) rotate(2deg); opacity: 1; }
-		28%       { transform: scale(1) rotate(0deg); opacity: 1; }
+		0%,
+		13% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
+		22% {
+			transform: scale(1.12) rotate(-5deg);
+			opacity: 1;
+		}
+		26% {
+			transform: scale(0.96) rotate(2deg);
+			opacity: 1;
+		}
+		28% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
 		/* sway */
-		36%       { transform: scale(1) rotate(3deg) translateX(2px); opacity: 1; }
-		44%       { transform: scale(1) rotate(-2deg) translateX(-1px); opacity: 1; }
-		52%       { transform: scale(1) rotate(1deg) translateX(1px); opacity: 1; }
-		55%       { transform: scale(1) rotate(0deg); opacity: 1; }
+		36% {
+			transform: scale(1) rotate(3deg) translateX(2px);
+			opacity: 1;
+		}
+		44% {
+			transform: scale(1) rotate(-2deg) translateX(-1px);
+			opacity: 1;
+		}
+		52% {
+			transform: scale(1) rotate(1deg) translateX(1px);
+			opacity: 1;
+		}
+		55% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
 		/* furl */
-		63%       { transform: scale(0.96) rotate(2deg); opacity: 1; }
-		72%       { transform: scale(0) rotate(30deg); opacity: 0; }
-		100%      { transform: scale(0) rotate(30deg); opacity: 0; }
+		63% {
+			transform: scale(0.96) rotate(2deg);
+			opacity: 1;
+		}
+		72% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
 	}
 	@keyframes l1r {
-		0%, 14%   { transform: scale(0) rotate(-30deg); opacity: 0; }
-		23%       { transform: scale(1.12) rotate(5deg); opacity: 1; }
-		27%       { transform: scale(0.96) rotate(-2deg); opacity: 1; }
-		29%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		36%       { transform: scale(1) rotate(2.5deg) translateX(2px); opacity: 1; }
-		44%       { transform: scale(1) rotate(-2deg) translateX(-1px); opacity: 1; }
-		52%       { transform: scale(1) rotate(1.5deg) translateX(1px); opacity: 1; }
-		55%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		64%       { transform: scale(0.96) rotate(-2deg); opacity: 1; }
-		73%       { transform: scale(0) rotate(-30deg); opacity: 0; }
-		100%      { transform: scale(0) rotate(-30deg); opacity: 0; }
+		0%,
+		14% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
+		23% {
+			transform: scale(1.12) rotate(5deg);
+			opacity: 1;
+		}
+		27% {
+			transform: scale(0.96) rotate(-2deg);
+			opacity: 1;
+		}
+		29% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		36% {
+			transform: scale(1) rotate(2.5deg) translateX(2px);
+			opacity: 1;
+		}
+		44% {
+			transform: scale(1) rotate(-2deg) translateX(-1px);
+			opacity: 1;
+		}
+		52% {
+			transform: scale(1) rotate(1.5deg) translateX(1px);
+			opacity: 1;
+		}
+		55% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		64% {
+			transform: scale(0.96) rotate(-2deg);
+			opacity: 1;
+		}
+		73% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
 	}
 
 	/* --- Pair 2 (mid) --- */
-	.mounted .leaf-2-left  { animation: l2l 7s ease-in-out infinite; }
-	.mounted .leaf-2-right { animation: l2r 7s ease-in-out infinite; }
+	.mounted .leaf-2-left {
+		animation: l2l 7s ease-in-out infinite;
+	}
+	.mounted .leaf-2-right {
+		animation: l2r 7s ease-in-out infinite;
+	}
 
 	@keyframes l2l {
-		0%, 17%   { transform: scale(0) rotate(30deg); opacity: 0; }
-		25%       { transform: scale(1.12) rotate(-5deg); opacity: 1; }
-		28%       { transform: scale(0.96) rotate(2deg); opacity: 1; }
-		30%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		38%       { transform: scale(1) rotate(3.5deg) translateX(2px); opacity: 1; }
-		46%       { transform: scale(1) rotate(-1.5deg) translateX(-1px); opacity: 1; }
-		53%       { transform: scale(1) rotate(1deg); opacity: 1; }
-		55%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		60%       { transform: scale(0.96) rotate(2deg); opacity: 1; }
-		68%       { transform: scale(0) rotate(30deg); opacity: 0; }
-		100%      { transform: scale(0) rotate(30deg); opacity: 0; }
+		0%,
+		17% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
+		25% {
+			transform: scale(1.12) rotate(-5deg);
+			opacity: 1;
+		}
+		28% {
+			transform: scale(0.96) rotate(2deg);
+			opacity: 1;
+		}
+		30% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		38% {
+			transform: scale(1) rotate(3.5deg) translateX(2px);
+			opacity: 1;
+		}
+		46% {
+			transform: scale(1) rotate(-1.5deg) translateX(-1px);
+			opacity: 1;
+		}
+		53% {
+			transform: scale(1) rotate(1deg);
+			opacity: 1;
+		}
+		55% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		60% {
+			transform: scale(0.96) rotate(2deg);
+			opacity: 1;
+		}
+		68% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
 	}
 	@keyframes l2r {
-		0%, 18%   { transform: scale(0) rotate(-30deg); opacity: 0; }
-		26%       { transform: scale(1.12) rotate(5deg); opacity: 1; }
-		29%       { transform: scale(0.96) rotate(-2deg); opacity: 1; }
-		31%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		38%       { transform: scale(1) rotate(3deg) translateX(2px); opacity: 1; }
-		46%       { transform: scale(1) rotate(-2deg) translateX(-1px); opacity: 1; }
-		53%       { transform: scale(1) rotate(1.5deg); opacity: 1; }
-		55%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		61%       { transform: scale(0.96) rotate(-2deg); opacity: 1; }
-		69%       { transform: scale(0) rotate(-30deg); opacity: 0; }
-		100%      { transform: scale(0) rotate(-30deg); opacity: 0; }
+		0%,
+		18% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
+		26% {
+			transform: scale(1.12) rotate(5deg);
+			opacity: 1;
+		}
+		29% {
+			transform: scale(0.96) rotate(-2deg);
+			opacity: 1;
+		}
+		31% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		38% {
+			transform: scale(1) rotate(3deg) translateX(2px);
+			opacity: 1;
+		}
+		46% {
+			transform: scale(1) rotate(-2deg) translateX(-1px);
+			opacity: 1;
+		}
+		53% {
+			transform: scale(1) rotate(1.5deg);
+			opacity: 1;
+		}
+		55% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		61% {
+			transform: scale(0.96) rotate(-2deg);
+			opacity: 1;
+		}
+		69% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
 	}
 
 	/* --- Pair 3 (top, latest) --- */
-	.mounted .leaf-3-left  { animation: l3l 7s ease-in-out infinite; }
-	.mounted .leaf-3-right { animation: l3r 7s ease-in-out infinite; }
+	.mounted .leaf-3-left {
+		animation: l3l 7s ease-in-out infinite;
+	}
+	.mounted .leaf-3-right {
+		animation: l3r 7s ease-in-out infinite;
+	}
 
 	@keyframes l3l {
-		0%, 21%   { transform: scale(0) rotate(30deg); opacity: 0; }
-		28%       { transform: scale(1.12) rotate(-5deg); opacity: 1; }
-		31%       { transform: scale(0.96) rotate(2deg); opacity: 1; }
-		33%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		40%       { transform: scale(1) rotate(4deg) translateX(2px); opacity: 1; }
-		48%       { transform: scale(1) rotate(-1.5deg) translateX(-1px); opacity: 1; }
-		53%       { transform: scale(1) rotate(1deg); opacity: 1; }
-		55%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		58%       { transform: scale(0.96) rotate(2deg); opacity: 1; }
-		65%       { transform: scale(0) rotate(30deg); opacity: 0; }
-		100%      { transform: scale(0) rotate(30deg); opacity: 0; }
+		0%,
+		21% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
+		28% {
+			transform: scale(1.12) rotate(-5deg);
+			opacity: 1;
+		}
+		31% {
+			transform: scale(0.96) rotate(2deg);
+			opacity: 1;
+		}
+		33% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		40% {
+			transform: scale(1) rotate(4deg) translateX(2px);
+			opacity: 1;
+		}
+		48% {
+			transform: scale(1) rotate(-1.5deg) translateX(-1px);
+			opacity: 1;
+		}
+		53% {
+			transform: scale(1) rotate(1deg);
+			opacity: 1;
+		}
+		55% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		58% {
+			transform: scale(0.96) rotate(2deg);
+			opacity: 1;
+		}
+		65% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(0) rotate(30deg);
+			opacity: 0;
+		}
 	}
 	@keyframes l3r {
-		0%, 22%   { transform: scale(0) rotate(-30deg); opacity: 0; }
-		29%       { transform: scale(1.12) rotate(5deg); opacity: 1; }
-		32%       { transform: scale(0.96) rotate(-2deg); opacity: 1; }
-		34%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		40%       { transform: scale(1) rotate(3.5deg) translateX(2px); opacity: 1; }
-		48%       { transform: scale(1) rotate(-2deg) translateX(-1px); opacity: 1; }
-		53%       { transform: scale(1) rotate(1.5deg); opacity: 1; }
-		55%       { transform: scale(1) rotate(0deg); opacity: 1; }
-		59%       { transform: scale(0.96) rotate(-2deg); opacity: 1; }
-		66%       { transform: scale(0) rotate(-30deg); opacity: 0; }
-		100%      { transform: scale(0) rotate(-30deg); opacity: 0; }
+		0%,
+		22% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
+		29% {
+			transform: scale(1.12) rotate(5deg);
+			opacity: 1;
+		}
+		32% {
+			transform: scale(0.96) rotate(-2deg);
+			opacity: 1;
+		}
+		34% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		40% {
+			transform: scale(1) rotate(3.5deg) translateX(2px);
+			opacity: 1;
+		}
+		48% {
+			transform: scale(1) rotate(-2deg) translateX(-1px);
+			opacity: 1;
+		}
+		53% {
+			transform: scale(1) rotate(1.5deg);
+			opacity: 1;
+		}
+		55% {
+			transform: scale(1) rotate(0deg);
+			opacity: 1;
+		}
+		59% {
+			transform: scale(0.96) rotate(-2deg);
+			opacity: 1;
+		}
+		66% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
+		100% {
+			transform: scale(0) rotate(-30deg);
+			opacity: 0;
+		}
 	}
 
 	/* ================================================================
@@ -319,32 +570,92 @@
 		opacity: 0;
 	}
 
-	.mounted .sprout-left  { animation: sp-l 7s ease-in-out infinite; }
-	.mounted .sprout-right { animation: sp-r 7s ease-in-out infinite; }
+	.mounted .sprout-left {
+		animation: sp-l 7s ease-in-out infinite;
+	}
+	.mounted .sprout-right {
+		animation: sp-r 7s ease-in-out infinite;
+	}
 
 	@keyframes sp-l {
-		0%, 25%   { opacity: 0; transform: scaleY(0) rotate(15deg); }
-		33%       { opacity: 1; transform: scaleY(1.15) rotate(-3deg); }
-		36%       { opacity: 1; transform: scaleY(1) rotate(0deg); }
+		0%,
+		25% {
+			opacity: 0;
+			transform: scaleY(0) rotate(15deg);
+		}
+		33% {
+			opacity: 1;
+			transform: scaleY(1.15) rotate(-3deg);
+		}
+		36% {
+			opacity: 1;
+			transform: scaleY(1) rotate(0deg);
+		}
 		/* sway */
-		42%       { opacity: 1; transform: scaleY(1.02) rotate(2deg) translateY(-1px); }
-		50%       { opacity: 1; transform: scaleY(0.98) rotate(-1.5deg) translateY(0.5px); }
-		55%       { opacity: 1; transform: scaleY(1) rotate(0deg); }
+		42% {
+			opacity: 1;
+			transform: scaleY(1.02) rotate(2deg) translateY(-1px);
+		}
+		50% {
+			opacity: 1;
+			transform: scaleY(0.98) rotate(-1.5deg) translateY(0.5px);
+		}
+		55% {
+			opacity: 1;
+			transform: scaleY(1) rotate(0deg);
+		}
 		/* furl */
-		58%       { opacity: 1; transform: scaleY(1) rotate(0deg); }
-		63%       { opacity: 0; transform: scaleY(0) rotate(15deg); }
-		100%      { opacity: 0; transform: scaleY(0) rotate(15deg); }
+		58% {
+			opacity: 1;
+			transform: scaleY(1) rotate(0deg);
+		}
+		63% {
+			opacity: 0;
+			transform: scaleY(0) rotate(15deg);
+		}
+		100% {
+			opacity: 0;
+			transform: scaleY(0) rotate(15deg);
+		}
 	}
 	@keyframes sp-r {
-		0%, 26%   { opacity: 0; transform: scaleY(0) rotate(-15deg); }
-		34%       { opacity: 1; transform: scaleY(1.15) rotate(3deg); }
-		37%       { opacity: 1; transform: scaleY(1) rotate(0deg); }
-		42%       { opacity: 1; transform: scaleY(1.02) rotate(-2deg) translateY(-1px); }
-		50%       { opacity: 1; transform: scaleY(0.98) rotate(1.5deg) translateY(0.5px); }
-		55%       { opacity: 1; transform: scaleY(1) rotate(0deg); }
-		59%       { opacity: 1; transform: scaleY(1) rotate(0deg); }
-		64%       { opacity: 0; transform: scaleY(0) rotate(-15deg); }
-		100%      { opacity: 0; transform: scaleY(0) rotate(-15deg); }
+		0%,
+		26% {
+			opacity: 0;
+			transform: scaleY(0) rotate(-15deg);
+		}
+		34% {
+			opacity: 1;
+			transform: scaleY(1.15) rotate(3deg);
+		}
+		37% {
+			opacity: 1;
+			transform: scaleY(1) rotate(0deg);
+		}
+		42% {
+			opacity: 1;
+			transform: scaleY(1.02) rotate(-2deg) translateY(-1px);
+		}
+		50% {
+			opacity: 1;
+			transform: scaleY(0.98) rotate(1.5deg) translateY(0.5px);
+		}
+		55% {
+			opacity: 1;
+			transform: scaleY(1) rotate(0deg);
+		}
+		59% {
+			opacity: 1;
+			transform: scaleY(1) rotate(0deg);
+		}
+		64% {
+			opacity: 0;
+			transform: scaleY(0) rotate(-15deg);
+		}
+		100% {
+			opacity: 0;
+			transform: scaleY(0) rotate(-15deg);
+		}
 	}
 
 	/* ================================================================
@@ -371,10 +682,22 @@
 	}
 
 	@keyframes stage-fade {
-		0%   { opacity: 0; transform: translateY(4px); }
-		12%  { opacity: 1; transform: translateY(0); }
-		85%  { opacity: 1; transform: translateY(0); }
-		100% { opacity: 0; transform: translateY(-4px); }
+		0% {
+			opacity: 0;
+			transform: translateY(4px);
+		}
+		12% {
+			opacity: 1;
+			transform: translateY(0);
+		}
+		85% {
+			opacity: 1;
+			transform: translateY(0);
+		}
+		100% {
+			opacity: 0;
+			transform: translateY(-4px);
+		}
 	}
 
 	.dot-pulse {
@@ -391,11 +714,17 @@
 		background: var(--foreground, hsl(0, 0%, 15%));
 		animation: dot-bounce 1.4s ease-in-out infinite;
 	}
-	.dot:nth-child(2) { animation-delay: 0.2s; }
-	.dot:nth-child(3) { animation-delay: 0.4s; }
+	.dot:nth-child(2) {
+		animation-delay: 0.2s;
+	}
+	.dot:nth-child(3) {
+		animation-delay: 0.4s;
+	}
 
 	@keyframes dot-bounce {
-		0%, 60%, 100% {
+		0%,
+		60%,
+		100% {
 			opacity: 0.25;
 			transform: translateY(0);
 		}
