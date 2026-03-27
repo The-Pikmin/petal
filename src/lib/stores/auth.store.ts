@@ -21,8 +21,46 @@ function createAuthStore() {
 		profile: null,
 		initialized: false,
 	});
+	let authStateSubscription: { unsubscribe: () => void } | null = null;
+	let activeSessionToken: string | null = null;
 
-	async function fetchProfile(_session: Session): Promise<ApiUser | null> {
+	function buildFallbackUser(session: Session): ApiUser {
+		const metadata = session.user.user_metadata ?? {};
+		const email = session.user.email ?? "";
+		const username =
+			metadata.username ??
+			metadata.user_name ??
+			metadata.full_name ??
+			metadata.name ??
+			(email.includes("@") ? email.split("@")[0] : "Gardener");
+
+		return {
+			id: session.user.id,
+			username,
+			email,
+		};
+	}
+
+	async function retryFetchProfile(session: Session): Promise<void> {
+		await new Promise((resolve) => setTimeout(resolve, 1200));
+		if (activeSessionToken !== session.access_token) {
+			return;
+		}
+
+		const user = await fetchProfile(session);
+		if (!user || activeSessionToken !== session.access_token) {
+			return;
+		}
+
+		set({
+			user,
+			session,
+			profile: { username: user.username, email: user.email },
+			initialized: true,
+		});
+	}
+
+	async function fetchProfile(session: Session): Promise<ApiUser | null> {
 		try {
 			return await apiFetch<ApiUser>("/me/");
 		} catch {
@@ -30,8 +68,48 @@ function createAuthStore() {
 		}
 	}
 
+	async function syncSession(session: Session | null): Promise<void> {
+		if (session) {
+			const fallbackUser = buildFallbackUser(session);
+			set({
+				user: fallbackUser,
+				session,
+				profile: { username: fallbackUser.username, email: fallbackUser.email },
+				initialized: true,
+			});
+			activeSessionToken = session.access_token;
+			const user = await fetchProfile(session);
+			if (activeSessionToken !== session.access_token) {
+				return;
+			}
+			if (!user) {
+				void retryFetchProfile(session);
+				return;
+			}
+			set({
+				user,
+				session,
+				profile: user ? { username: user.username, email: user.email } : null,
+				initialized: true,
+			});
+		} else {
+			activeSessionToken = null;
+			set({ user: null, session: null, profile: null, initialized: true });
+		}
+	}
+
 	return {
 		subscribe,
+
+		async refresh(): Promise<void> {
+			if (!browser) return;
+
+			const {
+				data: { session },
+			} = await supabase.auth.getSession();
+
+			await syncSession(session);
+		},
 
 		async initialize(): Promise<void> {
 			if (!browser) return;
@@ -40,31 +118,14 @@ function createAuthStore() {
 				data: { session },
 			} = await supabase.auth.getSession();
 
-			if (session) {
-				const user = await fetchProfile(session);
-				set({
-					user,
-					session,
-					profile: user ? { username: user.username, email: user.email } : null,
-					initialized: true,
-				});
-			} else {
-				set({ user: null, session: null, profile: null, initialized: true });
-			}
+			await syncSession(session);
 
-			supabase.auth.onAuthStateChange(async (event, session) => {
-				if (session) {
-					const user = await fetchProfile(session);
-					set({
-						user,
-						session,
-						profile: user ? { username: user.username, email: user.email } : null,
-						initialized: true,
-					});
-				} else {
-					set({ user: null, session: null, profile: null, initialized: true });
-				}
-			});
+			if (!authStateSubscription) {
+				const { data } = supabase.auth.onAuthStateChange(async (_event, session) => {
+					await syncSession(session);
+				});
+				authStateSubscription = data.subscription;
+			}
 		},
 
 		async loginWithEmail(email: string, password: string): Promise<void> {
