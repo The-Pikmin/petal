@@ -26,6 +26,9 @@
 	let analysisError = $state<string | null>(null);
 	let isSaved = $state(false);
 	let isSaving = $state(false);
+	const pageHeading = $derived(
+		isAnalyzing || result || analysisError ? "Scan Results" : "Review Photo"
+	);
 
 	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
 	const topDiseasePredictions = $derived.by(() => {
@@ -80,7 +83,6 @@
 		const photoData = sessionStorage.getItem("capturedPhoto");
 		if (photoData) {
 			photo = JSON.parse(photoData);
-			setTimeout(() => analyzePlant(), 500);
 		} else {
 			goto("/camera");
 		}
@@ -152,7 +154,7 @@
 </script>
 
 <svelte:head>
-	<title>Scan Results - GreenEye</title>
+	<title>{pageHeading} - GreenEye</title>
 </svelte:head>
 
 <div class="min-h-screen pb-20 bg-secondary/30">
@@ -168,7 +170,7 @@
 				<Home size={20} />
 				<span class="font-medium">Home</span>
 			</button>
-			<h1 class="text-xl font-bold text-foreground">Scan Results</h1>
+			<h1 class="text-xl font-bold text-foreground">{pageHeading}</h1>
 			<div class="w-16"></div>
 		</div>
 	</header>
@@ -190,6 +192,41 @@
 				</div>
 			</div>
 
+			{#if !result && !analysisError}
+				<div
+					class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
+					in:fly={{ y: 12, duration: 220 }}
+					out:fade={{ duration: 180 }}
+				>
+					<p class="text-xs font-bold uppercase tracking-[0.22em] text-primary/80">
+						Review Capture
+					</p>
+					<h2 class="mt-2 text-xl font-bold text-foreground">
+						Confirm this photo before analysis
+					</h2>
+					<p class="mt-2 text-sm text-muted-foreground">
+						Check that the plant or affected leaf is centered and easy to see, then
+						start analysis when you're ready.
+					</p>
+					<div class="mt-5 space-y-3">
+						<button
+							onclick={analyzePlant}
+							class="w-full px-6 py-4 rounded-3xl font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+						>
+							<Leaf size={20} />
+							<span>Analyze Photo</span>
+						</button>
+						<button
+							onclick={scanAgain}
+							class="w-full px-6 py-4 rounded-3xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] border border-border bg-card text-card-foreground hover:bg-muted flex items-center justify-center gap-2"
+						>
+							<Camera size={20} />
+							<span>Retake Photo</span>
+						</button>
+					</div>
+				</div>
+			{/if}
+
 			<!-- Error State -->
 			{#if analysisError}
 				<div
@@ -207,6 +244,12 @@
 						class="w-full px-4 py-3 rounded-2xl font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
 					>
 						Try Again
+					</button>
+					<button
+						onclick={scanAgain}
+						class="mt-3 w-full px-4 py-3 rounded-2xl font-medium border border-border bg-background text-foreground hover:bg-muted transition-colors"
+					>
+						Retake Photo
 					</button>
 				</div>
 			{/if}

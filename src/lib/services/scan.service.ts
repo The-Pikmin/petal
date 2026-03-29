@@ -1,3 +1,4 @@
+import { browser } from "$app/environment";
 import { apiFetch } from "$lib/services/api";
 import type {
 	ImageUploadResponse,
@@ -5,7 +6,6 @@ import type {
 	PlantIDResult,
 	ScanResultResponse,
 	StaticDiseaseResponse,
-	UploadRecordResponse,
 	PaginatedUploads,
 } from "$lib/types/api.types";
 import type { CapturedPhoto, ScanRecord } from "$lib/types";
@@ -13,6 +13,11 @@ import type { CapturedPhoto, ScanRecord } from "$lib/types";
 let diseaseLibraryCache: StaticDiseaseResponse[] | null = null;
 let diseaseLibraryPromise: Promise<StaticDiseaseResponse[]> | null = null;
 const diseaseDetailCache = new Map<string, StaticDiseaseResponse>();
+const SCAN_HISTORY_CACHE_KEY = "greeneye.scanHistory";
+
+let scanHistoryCache: ScanRecord[] | null = null;
+let scanHistoryPromise: Promise<ScanRecord[]> | null = null;
+let scanHistoryCacheVersion = 0;
 
 function base64ToFile(photo: CapturedPhoto): File {
 	const byteString = atob(photo.base64);
@@ -67,6 +72,7 @@ export async function saveScan(result: PlantIDResult): Promise<void> {
 			all_diseases: result.disease?.all_diseases ?? [],
 		}),
 	});
+	invalidateScanHistoryCache();
 }
 
 function mapResponseToScanRecord(r: ScanResultResponse): ScanRecord {
@@ -112,9 +118,76 @@ function mapResponseToScanRecord(r: ScanResultResponse): ScanRecord {
 	};
 }
 
-export async function fetchScanHistory(): Promise<ScanRecord[]> {
-	const data = await apiFetch<ScanResultResponse[]>("/scans/list/");
-	return data.map(mapResponseToScanRecord);
+function readScanHistoryCache(): ScanRecord[] | null {
+	if (scanHistoryCache) {
+		return scanHistoryCache;
+	}
+
+	if (!browser) {
+		return null;
+	}
+
+	const rawValue = localStorage.getItem(SCAN_HISTORY_CACHE_KEY);
+	if (!rawValue) {
+		return null;
+	}
+
+	try {
+		const parsed = JSON.parse(rawValue) as ScanRecord[];
+		scanHistoryCache = parsed;
+		return parsed;
+	} catch {
+		localStorage.removeItem(SCAN_HISTORY_CACHE_KEY);
+		return null;
+	}
+}
+
+function writeScanHistoryCache(scans: ScanRecord[]): void {
+	scanHistoryCache = scans;
+
+	if (!browser) {
+		return;
+	}
+
+	localStorage.setItem(SCAN_HISTORY_CACHE_KEY, JSON.stringify(scans));
+}
+
+export function invalidateScanHistoryCache(): void {
+	scanHistoryCacheVersion += 1;
+	scanHistoryCache = null;
+	scanHistoryPromise = null;
+
+	if (!browser) {
+		return;
+	}
+
+	localStorage.removeItem(SCAN_HISTORY_CACHE_KEY);
+}
+
+export async function fetchScanHistory(options?: { force?: boolean }): Promise<ScanRecord[]> {
+	if (!options?.force) {
+		const cachedHistory = readScanHistoryCache();
+		if (cachedHistory) {
+			return cachedHistory;
+		}
+	}
+
+	if (!scanHistoryPromise) {
+		const requestVersion = scanHistoryCacheVersion;
+		scanHistoryPromise = apiFetch<ScanResultResponse[]>("/scans/list/")
+			.then((data) => {
+				const mappedScans = data.map(mapResponseToScanRecord);
+				if (requestVersion === scanHistoryCacheVersion) {
+					writeScanHistoryCache(mappedScans);
+				}
+				return mappedScans;
+			})
+			.finally(() => {
+				scanHistoryPromise = null;
+			});
+	}
+
+	return scanHistoryPromise;
 }
 
 export async function fetchScanById(id: string): Promise<ScanResultResponse> {
@@ -125,6 +198,7 @@ export async function deleteScan(id: string): Promise<void> {
 	await apiFetch(`/scans/${id}/`, {
 		method: "DELETE",
 	});
+	invalidateScanHistoryCache();
 }
 
 export async function fetchUploads(

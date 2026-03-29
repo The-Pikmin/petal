@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
-	import { page } from "$app/state";
 	import type { ScanRecord } from "$lib/types";
 	import { requireAuth } from "$lib/guards/auth.guard";
 	import { deleteScan, fetchScanHistory } from "$lib/services/scan.service";
@@ -81,23 +80,22 @@
 	});
 
 	onMount(() => {
-		return requireAuth();
+		const authUnsub = requireAuth();
+		void loadHistory();
+
+		return authUnsub;
 	});
 
-	$effect(() => {
-		const _url = page.url.href;
+	async function loadHistory() {
 		loading = true;
-		fetchScanHistory()
-			.then((scans) => {
-				scanHistory = scans;
-			})
-			.catch(() => {
-				scanHistory = [];
-			})
-			.finally(() => {
-				loading = false;
-			});
-	});
+		try {
+			scanHistory = await fetchScanHistory();
+		} catch {
+			scanHistory = [];
+		} finally {
+			loading = false;
+		}
+	}
 
 	function formatDate(timestamp: number): string {
 		const date = new Date(timestamp);
@@ -447,6 +445,8 @@
 											<img
 												src={scan.imageUrl}
 												alt={getDisplayPlantName(scan)}
+												loading="lazy"
+												decoding="async"
 												class="w-full h-full object-cover"
 											/>
 										{:else}
