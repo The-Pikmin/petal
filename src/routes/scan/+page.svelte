@@ -28,6 +28,21 @@
 	let isSaving = $state(false);
 
 	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
+	const topDiseasePredictions = $derived.by(() => {
+		if (!result?.disease || result.disease.disease_name === "Healthy") return [];
+
+		const allDiseases = result.disease.all_diseases?.slice(0, 3) ?? [];
+		if (allDiseases.length > 0) return allDiseases;
+
+		return result.disease.disease_name
+			? [
+					{
+						name: result.disease.disease_name,
+						confidence: result.disease.confidence,
+					},
+				]
+			: [];
+	});
 	const recommendedActions = $derived.by(() => {
 		if (!diseaseInfo?.recommended_actions) return null;
 
@@ -36,12 +51,27 @@
 			: diseaseInfo.recommended_actions;
 	});
 
+	const commonNameOverrides: Record<string, string> = {
+		"Fragaria × ananassa": "Garden Strawberry",
+		"Fragaria ananassa": "Garden Strawberry",
+		"Fragaria vesca": "Wild Strawberry",
+	};
+
+	function getPreferredCommonName(name: string, commonName?: string): string | undefined {
+		const trimmedCommonName = commonName?.trim();
+		return trimmedCommonName || commonNameOverrides[name];
+	}
+
 	function getPrimaryPlantLabel(name: string, commonName?: string): string {
-		return commonName?.trim() || name;
+		return getPreferredCommonName(name, commonName) || name;
 	}
 
 	function getSecondaryPlantLabel(name: string, commonName?: string): string | null {
-		return commonName?.trim() ? name : null;
+		return getPreferredCommonName(name, commonName) ? name : null;
+	}
+
+	function formatDiseaseName(name: string): string {
+		return name.replaceAll("_", " ");
 	}
 
 	onMount(() => {
@@ -285,32 +315,46 @@
 								<AlertCircle size={24} class="text-orange-500 flex-shrink-0" />
 								<div>
 									<p class="text-lg font-bold text-foreground">
-										{result.disease.disease_name.replaceAll("_", " ")}
+										{formatDiseaseName(result.disease.disease_name)}
 									</p>
 									<p class="text-sm text-muted-foreground">
-										Detected in <span class="italic"
+										Top disease matches for <span class="italic"
 											>{result.disease.genus}</span
 										>
-										&mdash; {Math.round(result.disease.confidence * 100)}%
-										confidence
 									</p>
 								</div>
 							</div>
 
 							<div class="space-y-2">
-								{#each result.disease.all_diseases as d}
-									<div class="flex items-center justify-between text-sm">
-										<span class="text-foreground"
-											>{d.name.replaceAll("_", " ")}</span
+								{#each topDiseasePredictions as diseasePrediction, i}
+									<div class="flex items-center gap-3">
+										<span
+											class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 {i ===
+											0
+												? 'bg-primary text-primary-foreground'
+												: 'bg-muted text-muted-foreground'}"
 										>
-										<span class="text-muted-foreground font-medium"
-											>{Math.round(d.confidence * 100)}%</span
+											{i + 1}
+										</span>
+										<div class="flex-1 min-w-0">
+											<p
+												class="text-foreground truncate {i === 0
+													? 'text-lg font-bold'
+													: 'text-sm font-semibold'}"
+											>
+												{formatDiseaseName(diseasePrediction.name)}
+											</p>
+										</div>
+										<span class="text-sm text-muted-foreground font-medium"
+											>{Math.round(diseasePrediction.confidence * 100)}%</span
 										>
 									</div>
 									<div class="w-full bg-muted rounded-full h-1.5">
 										<div
 											class="bg-primary rounded-full h-1.5"
-											style="width: {Math.round(d.confidence * 100)}%"
+											style="width: {Math.round(
+												diseasePrediction.confidence * 100
+											)}%"
 										></div>
 									</div>
 								{/each}
