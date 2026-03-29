@@ -7,7 +7,7 @@ export interface ApiUser {
 
 // === Image Upload ===
 export interface ImageUploadResponse {
-	id: number;
+	id: string;
 	supabase_path: string;
 	uploaded_at: string;
 	url: string;
@@ -15,7 +15,7 @@ export interface ImageUploadResponse {
 }
 
 export interface UploadRecordResponse {
-	id: number;
+	id: string;
 	supabase_path: string;
 	uploaded_at: string;
 	url: string;

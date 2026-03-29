@@ -25,14 +25,14 @@
 	let totalPages = $state(1);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
-	let deletingIds = $state<Set<number>>(new Set());
+	let deletingIds = $state<Set<string>>(new Set());
 	let statusMessage = $state("");
 	let statusTone = $state<"success" | "error" | "info">("info");
 	let currentPage = $state(1);
 
 	// Multi-select
 	let selectMode = $state(false);
-	let selectedIds = $state<Set<number>>(new Set());
+	let selectedIds = $state<Set<string>>(new Set());
 	const selectedCount = $derived(selectedIds.size);
 	const canDeleteSelected = $derived(
 		selectedIds.size > 0 &&
@@ -77,7 +77,7 @@
 		});
 	}
 
-	function toggleSelect(id: number) {
+	function toggleSelect(id: string) {
 		const next = new Set(selectedIds);
 		if (next.has(id)) {
 			next.delete(id);
@@ -190,7 +190,7 @@
 
 	// Long press detection
 	let pressTimer: ReturnType<typeof setTimeout> | null = null;
-	let pressedId: number | null = null;
+	let pressedId: string | null = null;
 
 	function onPointerDown(upload: UploadRecordResponse) {
 		pressedId = upload.id;
