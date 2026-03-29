@@ -134,7 +134,7 @@ export async function fetchUploads(
 	return apiFetch<PaginatedUploads>(`/images/list/?page=${page}&page_size=${pageSize}`);
 }
 
-export async function deleteUpload(id: number): Promise<void> {
+export async function deleteUpload(id: string): Promise<void> {
 	await apiFetch(`/images/${id}/`, {
 		method: "DELETE",
 	});
