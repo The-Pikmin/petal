@@ -22,12 +22,37 @@
 
 	const top3 = $derived(scan ? scan.top_predictions.slice(0, 3) : []);
 	const primaryPrediction = $derived(scan?.top_predictions[0] ?? null);
+	const topDiseasePredictions = $derived.by(() => {
+		if (!scan?.disease_name || scan.disease_name === "Healthy") return [];
+
+		const allDiseases = scan.all_diseases?.slice(0, 3) ?? [];
+		if (allDiseases.length > 0) return allDiseases;
+
+		return scan.disease_name
+			? [
+					{
+						name: scan.disease_name,
+						confidence: scan.disease_confidence ?? 0,
+					},
+				]
+			: [];
+	});
+	const commonNameOverrides: Record<string, string> = {
+		"Fragaria × ananassa": "Garden Strawberry",
+		"Fragaria ananassa": "Garden Strawberry",
+		"Fragaria vesca": "Wild Strawberry",
+	};
+	const preferredCommonName = $derived.by(() => {
+		const commonName = primaryPrediction?.common_name?.trim();
+		return (
+			commonName ||
+			(primaryPrediction?.name ? commonNameOverrides[primaryPrediction.name] : undefined)
+		);
+	});
 	const displayPlantName = $derived(
-		primaryPrediction?.common_name?.trim() || scan?.plant_name || "Scan Detail"
+		preferredCommonName || scan?.plant_name || primaryPrediction?.name || "Scan Detail"
 	);
-	const displayScientificName = $derived(
-		primaryPrediction?.common_name?.trim() ? primaryPrediction.name : null
-	);
+	const displayScientificName = $derived(preferredCommonName ? primaryPrediction?.name : null);
 
 	onMount(() => {
 		return requireAuth();
@@ -79,6 +104,18 @@
 			hour: "numeric",
 			minute: "2-digit",
 		});
+	}
+
+	function getPrimaryPlantLabel(name: string, commonName?: string): string {
+		return commonName?.trim() || commonNameOverrides[name] || name;
+	}
+
+	function getSecondaryPlantLabel(name: string, commonName?: string): string | null {
+		return commonName?.trim() || commonNameOverrides[name] ? name : null;
+	}
+
+	function formatDiseaseName(name: string): string {
+		return name.replaceAll("_", " ");
 	}
 </script>
 
@@ -184,11 +221,17 @@
 											? 'text-lg font-bold'
 											: 'text-sm font-semibold'}"
 									>
-										{prediction.common_name?.trim() || prediction.name}
+										{getPrimaryPlantLabel(
+											prediction.name,
+											prediction.common_name
+										)}
 									</p>
-									{#if prediction.common_name?.trim()}
+									{#if getSecondaryPlantLabel(prediction.name, prediction.common_name)}
 										<p class="truncate text-xs italic text-muted-foreground">
-											{prediction.name}
+											{getSecondaryPlantLabel(
+												prediction.name,
+												prediction.common_name
+											)}
 										</p>
 									{/if}
 								</div>
@@ -234,36 +277,46 @@
 							<AlertCircle size={24} class="text-orange-500 flex-shrink-0" />
 							<div>
 								<p class="text-lg font-bold text-foreground">
-									{scan.disease_name.replaceAll("_", " ")}
+									{formatDiseaseName(scan.disease_name)}
 								</p>
 								<p class="text-sm text-muted-foreground">
-									{#if scan.disease_genus}Detected in <span class="italic"
-											>{scan.disease_genus}</span
-										>
-										&mdash;
-									{/if}
-									{#if scan.disease_confidence}{Math.round(
-											scan.disease_confidence * 100
-										)}% confidence{/if}
+									Top disease matches{#if scan.disease_genus}
+										for <span class="italic">{scan.disease_genus}</span>{/if}
 								</p>
 							</div>
 						</div>
 
-						{#if scan.all_diseases && scan.all_diseases.length > 0}
+						{#if topDiseasePredictions.length > 0}
 							<div class="space-y-2">
-								{#each scan.all_diseases as d}
-									<div class="flex items-center justify-between text-sm">
-										<span class="text-foreground"
-											>{d.name.replaceAll("_", " ")}</span
+								{#each topDiseasePredictions as diseasePrediction, i}
+									<div class="flex items-center gap-3">
+										<span
+											class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 {i ===
+											0
+												? 'bg-primary text-primary-foreground'
+												: 'bg-muted text-muted-foreground'}"
 										>
-										<span class="text-muted-foreground font-medium"
-											>{Math.round(d.confidence * 100)}%</span
+											{i + 1}
+										</span>
+										<div class="flex-1 min-w-0">
+											<p
+												class="text-foreground truncate {i === 0
+													? 'text-lg font-bold'
+													: 'text-sm font-semibold'}"
+											>
+												{formatDiseaseName(diseasePrediction.name)}
+											</p>
+										</div>
+										<span class="text-sm text-muted-foreground font-medium"
+											>{Math.round(diseasePrediction.confidence * 100)}%</span
 										>
 									</div>
 									<div class="w-full bg-muted rounded-full h-1.5">
 										<div
 											class="bg-primary rounded-full h-1.5"
-											style="width: {Math.round(d.confidence * 100)}%"
+											style="width: {Math.round(
+												diseasePrediction.confidence * 100
+											)}%"
 										></div>
 									</div>
 								{/each}
