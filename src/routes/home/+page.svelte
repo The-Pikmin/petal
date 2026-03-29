@@ -617,12 +617,16 @@
 													<img
 														src={scan.imageUrl}
 														alt="Scan"
+														loading="lazy"
+														decoding="async"
 														class="w-full h-full object-cover"
 													/>
 												{:else if scan.photo.base64}
 													<img
 														src={`data:image/${scan.photo.format};base64,${scan.photo.base64}`}
 														alt="Scan"
+														loading="lazy"
+														decoding="async"
 														class="w-full h-full object-cover"
 													/>
 												{:else}

@@ -14,7 +14,7 @@
 		ChevronLeft,
 		ChevronRight,
 	} from "lucide-svelte";
-	import { fade, fly } from "svelte/transition";
+	import { fade } from "svelte/transition";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 
@@ -97,34 +97,6 @@
 		selectedIds = new Set();
 	}
 
-	async function handleDeleteUpload(upload: UploadRecordResponse) {
-		if (upload.in_use) {
-			statusTone = "info";
-			statusMessage =
-				"Delete the saved scan that uses this image before removing the upload.";
-			return;
-		}
-
-		const confirmed = window.confirm("Delete this uploaded image? This cannot be undone.");
-		if (!confirmed) return;
-
-		deletingIds = new Set([...deletingIds, upload.id]);
-		statusMessage = "";
-		try {
-			await deleteUpload(upload.id);
-			uploads = uploads.filter((item) => item.id !== upload.id);
-			statusTone = "success";
-			statusMessage = "Upload deleted.";
-		} catch (err) {
-			statusTone = "error";
-			statusMessage = err instanceof Error ? err.message : "Unable to delete this upload.";
-		} finally {
-			const next = new Set(deletingIds);
-			next.delete(upload.id);
-			deletingIds = next;
-		}
-	}
-
 	async function handleDeleteSelected() {
 		const toDelete = [...selectedIds].filter((id) => {
 			const u = uploads.find((u) => u.id === id);
@@ -190,13 +162,10 @@
 
 	// Long press detection
 	let pressTimer: ReturnType<typeof setTimeout> | null = null;
-	let pressedId: string | null = null;
 
 	function onPointerDown(upload: UploadRecordResponse) {
-		pressedId = upload.id;
 		pressTimer = setTimeout(() => {
 			handleLongPress(upload);
-			pressedId = null;
 		}, 500);
 	}
 
@@ -205,7 +174,6 @@
 			clearTimeout(pressTimer);
 			pressTimer = null;
 		}
-		pressedId = null;
 	}
 
 	$effect(() => {
@@ -364,6 +332,8 @@
 							<img
 								src={upload.url}
 								alt="Upload #{upload.id}"
+								loading="lazy"
+								decoding="async"
 								class="w-full h-full object-cover"
 								draggable="false"
 							/>
