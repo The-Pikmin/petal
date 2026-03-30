@@ -443,7 +443,7 @@
 									>
 										{#if scan.imageUrl}
 											<img
-												src={scan.imageUrl}
+												src={scan.thumbnailUrl || scan.imageUrl}
 												alt={getDisplayPlantName(scan)}
 												loading="lazy"
 												decoding="async"

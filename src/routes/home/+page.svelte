@@ -615,7 +615,7 @@
 											>
 												{#if scan.imageUrl}
 													<img
-														src={scan.imageUrl}
+														src={scan.thumbnailUrl || scan.imageUrl}
 														alt="Scan"
 														loading="lazy"
 														decoding="async"
