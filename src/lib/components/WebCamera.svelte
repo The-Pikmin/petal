@@ -55,7 +55,9 @@
 	let detectionTimer: number | null = null;
 	let progressAnimationFrame: number | null = null;
 	let lowConfidenceStartAt = 0;
-	let holdStartAt: number | null = null;
+	let lockAccumulatedMs = 0;
+	let lockSegmentStartedAt: number | null = null;
+	let lockBreakStartedAt: number | null = null;
 	let isMounted = true;
 	let detectionCanvas: HTMLCanvasElement | null = null;
 	let motionCanvas: HTMLCanvasElement | null = null;
@@ -193,12 +195,14 @@
 	function updateProgressAnimation(now: number) {
 		progressAnimationFrame = null;
 
-		if (!holdStartAt || !isMounted || isCapturing || detectionState !== "locked") {
+		if (!isMounted || isCapturing || detectionState !== "locked") {
 			return;
 		}
 
-		const elapsed = now - holdStartAt;
-		autoCaptureProgress = Math.min(elapsed / PLANT_DETECTION_CONFIG.dwellDurationMs, 1);
+		autoCaptureProgress = Math.min(
+			getCurrentLockDuration(now) / PLANT_DETECTION_CONFIG.dwellDurationMs,
+			1
+		);
 
 		if (autoCaptureProgress < 1) {
 			progressAnimationFrame = window.requestAnimationFrame(updateProgressAnimation);
@@ -249,9 +253,17 @@
 			if (!isMounted) return;
 
 			latestDetection = result;
-			latestStabilityScore = stabilityScore;
+			latestStabilityScore =
+				latestStabilityScore === null
+					? stabilityScore
+					: latestStabilityScore * (1 - PLANT_DETECTION_CONFIG.stabilitySmoothingFactor) +
+						stabilityScore * PLANT_DETECTION_CONFIG.stabilitySmoothingFactor;
 
-			const shouldAutoCapture = syncOverlayState(performance.now(), result, stabilityScore);
+			const shouldAutoCapture = syncOverlayState(
+				performance.now(),
+				result,
+				latestStabilityScore
+			);
 			if (shouldAutoCapture) {
 				await capturePhoto("auto");
 				return;
@@ -308,13 +320,17 @@
 				stabilityScore !== null &&
 				stabilityScore <= PLANT_DETECTION_CONFIG.stabilityThreshold
 			) {
-				if (holdStartAt === null) {
-					holdStartAt = now;
+				if (lockSegmentStartedAt === null) {
+					lockSegmentStartedAt = now;
 					startProgressLoop();
 				}
+				lockBreakStartedAt = null;
 
-				const elapsed = now - holdStartAt;
-				autoCaptureProgress = Math.min(elapsed / PLANT_DETECTION_CONFIG.dwellDurationMs, 1);
+				const elapsed = getCurrentLockDuration(now);
+				autoCaptureProgress = Math.min(
+					elapsed / PLANT_DETECTION_CONFIG.dwellDurationMs,
+					1
+				);
 
 				if (elapsed >= PLANT_DETECTION_CONFIG.dwellDurationMs) {
 					detectionState = "auto_capturing";
@@ -326,6 +342,21 @@
 				detectionState = "locked";
 				startProgressLoop();
 				return false;
+			}
+
+			if (lockSegmentStartedAt !== null) {
+				lockAccumulatedMs += now - lockSegmentStartedAt;
+				lockSegmentStartedAt = null;
+			}
+			stopProgressLoop();
+			if (lockAccumulatedMs > 0) {
+				if (lockBreakStartedAt === null) {
+					lockBreakStartedAt = now;
+				}
+				if (now - lockBreakStartedAt < PLANT_DETECTION_CONFIG.lockReleaseGraceMs) {
+					detectionState = "locked";
+					return false;
+				}
 			}
 
 			resetAutoCaptureLock();
@@ -348,8 +379,14 @@
 
 	function resetAutoCaptureLock() {
 		stopProgressLoop();
-		holdStartAt = null;
+		lockAccumulatedMs = 0;
+		lockSegmentStartedAt = null;
+		lockBreakStartedAt = null;
 		autoCaptureProgress = 0;
+	}
+
+	function getCurrentLockDuration(now: number) {
+		return lockAccumulatedMs + (lockSegmentStartedAt !== null ? now - lockSegmentStartedAt : 0);
 	}
 
 	function getDetectionCanvas() {

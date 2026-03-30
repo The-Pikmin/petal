@@ -22,8 +22,10 @@ export interface CameraDetectionCopy {
 export const PLANT_DETECTION_CONFIG = {
 	detectionFps: 5,
 	plantConfidenceThreshold: 0.2,
-	stabilityThreshold: 0.028,
+	stabilityThreshold: 0.04,
+	stabilitySmoothingFactor: 0.35,
 	dwellDurationMs: 1_500,
+	lockReleaseGraceMs: 350,
 	noDetectionHintDelayMs: 5_000,
 	motionSampleSize: 24,
 	topKPredictions: 5,
