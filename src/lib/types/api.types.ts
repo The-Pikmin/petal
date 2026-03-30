@@ -11,6 +11,8 @@ export interface ImageUploadResponse {
 	supabase_path: string;
 	uploaded_at: string;
 	url: string;
+	thumbnail_url: string;
+	url_expires_at: string;
 	in_use?: boolean;
 }
 
@@ -19,6 +21,8 @@ export interface UploadRecordResponse {
 	supabase_path: string;
 	uploaded_at: string;
 	url: string;
+	thumbnail_url: string;
+	url_expires_at: string;
 	in_use: boolean;
 }
 
@@ -74,6 +78,8 @@ export interface PlantIDResult {
 export interface ScanResultResponse {
 	id: number;
 	image_url: string;
+	thumbnail_url: string;
+	image_url_expires_at: string;
 	plant_name: string;
 	top_predictions: SpeciesPrediction[];
 	disease_name: string;

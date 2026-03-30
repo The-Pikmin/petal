@@ -16,12 +16,8 @@
 	}
 
 	function handleCancel() {
-		// Return to previous page if possible, otherwise home
-		if (window.history.length > 1) {
-			window.history.back();
-		} else {
-			goto("/");
-		}
+		sessionStorage.removeItem("capturedPhoto");
+		goto("/");
 	}
 </script>
 

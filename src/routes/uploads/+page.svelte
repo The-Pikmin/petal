@@ -330,7 +330,7 @@
 							disabled={deletingIds.has(upload.id)}
 						>
 							<img
-								src={upload.url}
+								src={upload.thumbnail_url || upload.url}
 								alt="Upload #{upload.id}"
 								loading="lazy"
 								decoding="async"

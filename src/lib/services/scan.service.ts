@@ -14,6 +14,7 @@ let diseaseLibraryCache: StaticDiseaseResponse[] | null = null;
 let diseaseLibraryPromise: Promise<StaticDiseaseResponse[]> | null = null;
 const diseaseDetailCache = new Map<string, StaticDiseaseResponse>();
 const SCAN_HISTORY_CACHE_KEY = "greeneye.scanHistory";
+const SIGNED_URL_REFRESH_BUFFER_MS = 60_000;
 
 let scanHistoryCache: ScanRecord[] | null = null;
 let scanHistoryPromise: Promise<ScanRecord[]> | null = null;
@@ -115,12 +116,34 @@ function mapResponseToScanRecord(r: ScanResultResponse): ScanRecord {
 		scientificName: scientificName || undefined,
 		timestamp: new Date(r.created_at).getTime(),
 		imageUrl: r.image_url,
+		thumbnailUrl: r.thumbnail_url || r.image_url,
+		imageUrlExpiresAt: r.image_url_expires_at || undefined,
 	};
+}
+
+function hasValidSignedImageUrls(scans: ScanRecord[]): boolean {
+	const refreshThreshold = Date.now() + SIGNED_URL_REFRESH_BUFFER_MS;
+
+	return scans.every((scan) => {
+		if (!scan.imageUrl) {
+			return true;
+		}
+
+		if (!scan.imageUrlExpiresAt) {
+			return false;
+		}
+
+		const expiresAt = Date.parse(scan.imageUrlExpiresAt);
+		return Number.isFinite(expiresAt) && expiresAt > refreshThreshold;
+	});
 }
 
 function readScanHistoryCache(): ScanRecord[] | null {
 	if (scanHistoryCache) {
-		return scanHistoryCache;
+		if (hasValidSignedImageUrls(scanHistoryCache)) {
+			return scanHistoryCache;
+		}
+		invalidateScanHistoryCache();
 	}
 
 	if (!browser) {
@@ -134,6 +157,10 @@ function readScanHistoryCache(): ScanRecord[] | null {
 
 	try {
 		const parsed = JSON.parse(rawValue) as ScanRecord[];
+		if (!hasValidSignedImageUrls(parsed)) {
+			localStorage.removeItem(SCAN_HISTORY_CACHE_KEY);
+			return null;
+		}
 		scanHistoryCache = parsed;
 		return parsed;
 	} catch {
