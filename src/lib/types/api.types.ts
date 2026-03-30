@@ -3,6 +3,23 @@ export interface ApiUser {
 	id: string;
 	username: string;
 	email: string;
+	display_name: string;
+	avatar_url: string;
+	joined_at: string;
+	settings: ApiUserSettings;
+}
+
+export interface ApiUserSettings {
+	theme: "light" | "dark" | "auto";
+	notifications: {
+		enabled: boolean;
+		scan_reminders: boolean;
+		care_reminders: boolean;
+	};
+	privacy: {
+		share_data: boolean;
+		analytics_enabled: boolean;
+	};
 }
 
 // === Image Upload ===

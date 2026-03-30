@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
 	import { fade, fly } from "svelte/transition";
 	import { Camera, ShieldCheck, Sprout, ArrowRight, Sun, Moon, Menu, X } from "lucide-svelte";
