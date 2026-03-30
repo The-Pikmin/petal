@@ -1,43 +1,78 @@
 <script lang="ts">
-	import { theme } from "$lib/stores/theme.store";
-	import {
-		User,
-		Mail,
-		Bell,
-		Globe,
-		Shield,
-		HelpCircle,
-		Info,
-		LogOut,
-		ChevronRight,
-		Sun,
-		Moon,
-		Edit,
-	} from "lucide-svelte";
-	import { fade, fly } from "svelte/transition";
-	import { onMount } from "svelte";
 	import { goto } from "$app/navigation";
+	import { onMount } from "svelte";
+	import { fade, fly } from "svelte/transition";
+	import {
+		Bell,
+		Camera,
+		LogOut,
+		Mail,
+		Moon,
+		Shield,
+		Sun,
+		Upload,
+		User,
+		X,
+	} from "lucide-svelte";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
-	import { auth, currentUser } from "$lib/stores/auth.store";
 	import { requireAuth } from "$lib/guards/auth.guard";
+	import {
+		deleteUserAvatar,
+		updateUserProfile,
+		updateUserSettings,
+		uploadUserAvatar,
+	} from "$lib/services/profile.service";
+	import { auth, currentUser } from "$lib/stores/auth.store";
+	import { theme } from "$lib/stores/theme.store";
+	import { supabase } from "$lib/services/supabase";
+	import type { Theme } from "$lib/stores/theme.store";
 
-	let statusMessage = $state("");
-	let statusTone = $state<"info" | "success">("info");
+	type StatusTone = "info" | "success" | "error";
 
-	onMount(() => {
-		return requireAuth();
+	let profileForm = $state({
+		username: "",
+		displayName: "",
+	});
+	let settingsForm = $state({
+		notificationsEnabled: true,
+		scanReminders: true,
+		careReminders: true,
+		shareData: false,
+		analyticsEnabled: true,
+	});
+	let passwordForm = $state({
+		nextPassword: "",
+		confirmPassword: "",
 	});
 
-	async function handleSignOut() {
-		await auth.logout();
-		goto("/login", { replaceState: true });
-	}
+	let statusMessage = $state("");
+	let statusTone = $state<StatusTone>("info");
+	let isSavingProfile = $state(false);
+	let isSavingSettings = $state(false);
+	let isUpdatingPassword = $state(false);
+	let isUploadingAvatar = $state(false);
+	let lastHydratedUserId = "";
 
-	function showComingSoon(label: string) {
-		statusTone = "info";
-		statusMessage = `${label} is coming soon. For the demo, the core diagnosis flow is ready.`;
-	}
+	onMount(() => requireAuth());
+
+	$effect(() => {
+		const user = $currentUser;
+		if (!user || user.id === lastHydratedUserId) return;
+
+		lastHydratedUserId = user.id;
+		profileForm = {
+			username: user.username,
+			displayName: user.display_name,
+		};
+		settingsForm = {
+			notificationsEnabled: user.settings.notifications.enabled,
+			scanReminders: user.settings.notifications.scan_reminders,
+			careReminders: user.settings.notifications.care_reminders,
+			shareData: user.settings.privacy.share_data,
+			analyticsEnabled: user.settings.privacy.analytics_enabled,
+		};
+	});
 
 	$effect(() => {
 		if (!statusMessage) return;
@@ -48,80 +83,152 @@
 		return () => window.clearTimeout(timeoutId);
 	});
 
-	const settingsSections = [
-		{
-			title: "Account",
-			items: [
-				{
-					icon: User,
-					label: "Edit Profile",
-					action: () => showComingSoon("Profile editing"),
+	function setStatus(message: string, tone: StatusTone = "success") {
+		statusMessage = message;
+		statusTone = tone;
+	}
+
+	function formatJoinDate(joinedAt?: string) {
+		if (!joinedAt) return "";
+		return new Date(joinedAt).toLocaleDateString(undefined, {
+			month: "long",
+			year: "numeric",
+		});
+	}
+
+	async function handleSignOut() {
+		await auth.logout();
+		goto("/login", { replaceState: true });
+	}
+
+	async function handleProfileSave() {
+		if (!$currentUser) return;
+		isSavingProfile = true;
+		try {
+			const updatedUser = await updateUserProfile({
+				username: profileForm.username.trim(),
+				display_name: profileForm.displayName.trim(),
+			});
+			await auth.setProfile(updatedUser);
+			setStatus("Profile updated.");
+		} catch (error) {
+			setStatus(error instanceof Error ? error.message : "Failed to update profile.", "error");
+		} finally {
+			isSavingProfile = false;
+		}
+	}
+
+	async function handleAvatarChange(event: Event) {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		isUploadingAvatar = true;
+		try {
+			const updatedUser = await uploadUserAvatar(file);
+			await auth.setProfile(updatedUser);
+			setStatus("Profile photo updated.");
+		} catch (error) {
+			setStatus(
+				error instanceof Error ? error.message : "Failed to upload profile photo.",
+				"error"
+			);
+		} finally {
+			input.value = "";
+			isUploadingAvatar = false;
+		}
+	}
+
+	async function handleAvatarDelete() {
+		if (!$currentUser) return;
+		isUploadingAvatar = true;
+		try {
+			await deleteUserAvatar();
+			await auth.setProfile({ ...$currentUser, avatar_url: "" });
+			setStatus("Profile photo removed.");
+		} catch (error) {
+			setStatus(
+				error instanceof Error ? error.message : "Failed to remove profile photo.",
+				"error"
+			);
+		} finally {
+			isUploadingAvatar = false;
+		}
+	}
+
+	async function handleThemeChange(nextTheme: Theme) {
+		if (!$currentUser) return;
+		await theme.setTheme(nextTheme);
+		await auth.setProfile({
+			...$currentUser,
+			settings: {
+				...$currentUser.settings,
+				theme: nextTheme,
+			},
+		});
+	}
+
+	async function handleSettingsSave() {
+		if (!$currentUser) return;
+		isSavingSettings = true;
+		try {
+			const settings = await updateUserSettings({
+				notifications: {
+					enabled: settingsForm.notificationsEnabled,
+					scan_reminders: settingsForm.scanReminders,
+					care_reminders: settingsForm.careReminders,
 				},
-				{
-					icon: Mail,
-					label: "Email & Password",
-					action: () => showComingSoon("Password settings"),
+				privacy: {
+					share_data: settingsForm.shareData,
+					analytics_enabled: settingsForm.analyticsEnabled,
 				},
-			],
-		},
-		{
-			title: "Preferences",
-			items: [
-				{
-					icon: Bell,
-					label: "Notifications",
-					subtitle: "Enabled",
-					action: () => showComingSoon("Notifications"),
-				},
-				{
-					icon: Globe,
-					label: "Language",
-					subtitle: "English",
-					action: () => showComingSoon("Language preferences"),
-				},
-			],
-		},
-		{
-			title: "Privacy & Security",
-			items: [
-				{
-					icon: Shield,
-					label: "Data & Privacy",
-					action: () => showComingSoon("Privacy controls"),
-				},
-				{
-					icon: Shield,
-					label: "Terms of Service",
-					action: () => showComingSoon("Terms of Service"),
-				},
-			],
-		},
-		{
-			title: "Support",
-			items: [
-				{
-					icon: HelpCircle,
-					label: "Help & FAQs",
-					action: () => showComingSoon("Help center"),
-				},
-				{
-					icon: Info,
-					label: "About GreenEye",
-					action: () => showComingSoon("About GreenEye"),
-				},
-			],
-		},
-	];
+			});
+			await auth.setProfile({
+				...$currentUser,
+				settings,
+			});
+			setStatus("Settings updated.");
+		} catch (error) {
+			setStatus(error instanceof Error ? error.message : "Failed to update settings.", "error");
+		} finally {
+			isSavingSettings = false;
+		}
+	}
+
+	async function handlePasswordUpdate() {
+		if (passwordForm.nextPassword.length < 8) {
+			setStatus("Password must be at least 8 characters.", "error");
+			return;
+		}
+
+		if (passwordForm.nextPassword !== passwordForm.confirmPassword) {
+			setStatus("Passwords do not match.", "error");
+			return;
+		}
+
+		isUpdatingPassword = true;
+		try {
+			const { error } = await supabase.auth.updateUser({
+				password: passwordForm.nextPassword,
+			});
+			if (error) throw error;
+			passwordForm = { nextPassword: "", confirmPassword: "" };
+			setStatus("Password updated.");
+		} catch (error) {
+			setStatus(error instanceof Error ? error.message : "Failed to update password.", "error");
+		} finally {
+			isUpdatingPassword = false;
+		}
+	}
 </script>
 
 <svelte:head>
 	<title>Profile - GreenEye</title>
 </svelte:head>
 
-<div class="min-h-screen pb-20 bg-secondary/30">
-	<!-- Header -->
+<div class="min-h-screen bg-secondary/30 pb-20">
 	<header
-		class="px-6 py-6 bg-background sticky top-0 z-50 pt-[calc(1.5rem+env(safe-area-inset-top))]"
+		class="sticky top-0 z-50 bg-background px-6 py-6 pt-[calc(1.5rem+env(safe-area-inset-top))]"
 	>
 		<div class="container-responsive">
 			<div class="flex items-center justify-between">
@@ -131,168 +238,299 @@
 		</div>
 	</header>
 
-	<!-- Main Content -->
-	<main class="px-6 py-6 space-y-6">
+	<main class="px-6 py-6">
 		<div class="container-responsive desktop-sidebar-layout space-y-6 lg:space-y-0">
-			<!-- Left Column (Desktop) -->
-			<div class="space-y-6 lg:col-start-1 lg:row-start-1 lg:h-fit lg:sticky lg:top-28">
-				<!-- Profile Card -->
-				<div
-					class="rounded-3xl p-6 bg-card text-card-foreground shadow-sm border border-border"
-					in:fade={{ duration: 400, delay: 100 }}
+			<div class="space-y-6 lg:sticky lg:top-28">
+				<section
+					class="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm"
+					in:fade={{ duration: 300 }}
 				>
-					<div class="flex items-center gap-4 mb-4">
-						<!-- Avatar -->
-						<div
-							class="w-20 h-20 rounded-full flex items-center justify-center bg-primary text-primary-foreground"
-						>
-							<User size={32} />
-						</div>
-
-						<!-- User Info -->
-						<div class="flex-1">
-							<h2 class="text-xl font-bold text-foreground mb-1">
-								{$currentUser?.username ?? ""}
-							</h2>
-							<p class="text-sm text-muted-foreground mb-1">
-								{$currentUser?.email ?? ""}
-							</p>
-						</div>
-
-						<!-- Edit Button -->
-						<button
-							onclick={() => showComingSoon("Profile editing")}
-							class="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-muted"
-							aria-label="Edit profile"
-						>
-							<Edit size={18} />
-						</button>
-					</div>
-				</div>
-
-				<!-- Theme Toggle Card -->
-				<div
-					class="rounded-3xl p-4 bg-card text-card-foreground shadow-sm border border-border"
-					in:fade={{ duration: 400, delay: 200 }}
-				>
-					<div class="flex items-center justify-between">
-						<div class="flex items-center gap-3">
+					<div class="flex items-start gap-4">
+						<div class="relative">
 							<div
-								class="w-10 h-10 rounded-full flex items-center justify-center bg-muted"
+								class="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground"
 							>
-								{#if $theme === "light"}
-									<Sun size={20} />
+								{#if $currentUser?.avatar_url}
+									<img
+										src={$currentUser.avatar_url}
+										alt="Profile avatar"
+										class="h-full w-full object-cover"
+									/>
 								{:else}
-									<Moon size={20} />
+									<User size={32} />
 								{/if}
 							</div>
-							<div>
-								<p class="font-medium text-foreground">Theme</p>
-								<p class="text-sm text-muted-foreground">
-									{$theme === "light" ? "Light" : "Dark"} mode
-								</p>
-							</div>
+							<label
+								class="absolute -bottom-2 -right-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-foreground text-background shadow-sm"
+							>
+								<input
+									type="file"
+									accept="image/*"
+									class="hidden"
+									onchange={handleAvatarChange}
+									disabled={isUploadingAvatar}
+								/>
+								<Camera size={18} />
+							</label>
 						</div>
-						<button
-							onclick={() => theme.toggle()}
-							class="px-4 py-2 rounded-full text-sm font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90"
-						>
-							Switch
-						</button>
+
+						<div class="flex-1">
+							<h2 class="text-xl font-bold text-foreground">
+								{$currentUser?.display_name ?? ""}
+							</h2>
+							<p class="text-sm text-muted-foreground">{$currentUser?.email ?? ""}</p>
+							{#if $currentUser?.joined_at}
+								<p class="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+									Member since {formatJoinDate($currentUser.joined_at)}
+								</p>
+							{/if}
+						</div>
 					</div>
-				</div>
+
+					<div class="mt-5 flex gap-3">
+						<label
+							class="inline-flex cursor-pointer items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+						>
+							<input
+								type="file"
+								accept="image/*"
+								class="hidden"
+								onchange={handleAvatarChange}
+								disabled={isUploadingAvatar}
+							/>
+							<Upload size={16} />
+							{isUploadingAvatar ? "Uploading..." : "Upload Photo"}
+						</label>
+						{#if $currentUser?.avatar_url}
+							<button
+								type="button"
+								class="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+								onclick={handleAvatarDelete}
+								disabled={isUploadingAvatar}
+							>
+								<X size={16} />
+								Remove
+							</button>
+						{/if}
+					</div>
+				</section>
 
 				{#if statusMessage}
 					<div
-						class={`rounded-3xl p-4 text-card-foreground shadow-sm border ${
+						class={`rounded-3xl border p-4 shadow-sm ${
 							statusTone === "success"
-								? "bg-green-500/10 border-green-500/20"
-								: "bg-primary/5 border-primary/15"
+								? "border-green-500/20 bg-green-500/10"
+								: statusTone === "error"
+									? "border-red-500/20 bg-red-500/10"
+									: "border-primary/15 bg-primary/5"
 						}`}
 						in:fly={{ y: 10, duration: 220 }}
 						out:fade={{ duration: 180 }}
 					>
-						<div class="flex items-start justify-between gap-4">
-							<p class="text-sm text-foreground">{statusMessage}</p>
-							<button
-								onclick={() => (statusMessage = "")}
-								class="text-xs font-semibold text-primary hover:opacity-80"
-							>
-								Dismiss
-							</button>
-						</div>
+						<p class="text-sm text-foreground">{statusMessage}</p>
 					</div>
 				{/if}
+
+				<button
+					type="button"
+					class="flex w-full items-center justify-center gap-2 rounded-3xl bg-destructive px-6 py-4 font-semibold text-white transition-transform duration-300 hover:scale-[1.01] active:scale-[0.99]"
+					onclick={handleSignOut}
+				>
+					<LogOut size={20} />
+					Sign Out
+				</button>
 			</div>
 
-			<!-- Right Column (Desktop) -->
-			<div class="space-y-6 lg:col-start-2 lg:row-start-1">
-				<!-- Settings Sections -->
-				{#each settingsSections as section, i (section.title)}
-					<div
-						class="space-y-2"
-						in:fly|global={{ y: 20, duration: 400, delay: 300 + i * 100 }}
-					>
-						<h3 class="text-sm font-semibold text-muted-foreground px-2">
-							{section.title}
-						</h3>
-						<div
-							class="rounded-3xl overflow-hidden bg-card text-card-foreground shadow-sm border border-border"
+			<div class="space-y-6">
+				<section
+					class="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm"
+					in:fly|global={{ y: 20, duration: 350, delay: 100 }}
+				>
+					<h3 class="text-lg font-semibold text-foreground">Edit Profile</h3>
+					<div class="mt-5 grid gap-4 md:grid-cols-2">
+						<label class="space-y-2">
+							<span class="text-sm font-medium text-foreground">Display Name</span>
+							<input
+								class="w-full rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+								bind:value={profileForm.displayName}
+								placeholder="How your name appears"
+							/>
+						</label>
+						<label class="space-y-2">
+							<span class="text-sm font-medium text-foreground">Username</span>
+							<input
+								class="w-full rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+								bind:value={profileForm.username}
+								placeholder="Username"
+							/>
+						</label>
+						<label class="space-y-2 md:col-span-2">
+							<span class="text-sm font-medium text-foreground">Email</span>
+							<div
+								class="flex items-center gap-3 rounded-2xl border border-border bg-muted/60 px-4 py-3 text-muted-foreground"
+							>
+								<Mail size={18} />
+								<span>{$currentUser?.email ?? ""}</span>
+							</div>
+						</label>
+					</div>
+					<div class="mt-5">
+						<button
+							type="button"
+							class="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+							onclick={handleProfileSave}
+							disabled={isSavingProfile}
 						>
-							{#each section.items as item, index}
-								<button
-									onclick={item.action}
-									class="w-full px-4 py-4 flex items-center gap-3 transition-colors hover:bg-muted"
-									class:border-t={index > 0}
-									class:border-border={index > 0}
-								>
-									<div
-										class="w-10 h-10 rounded-full flex items-center justify-center bg-muted flex-shrink-0"
-									>
-										<item.icon size={20} />
-									</div>
-									<div class="flex-1 text-left">
-										<p class="font-medium text-foreground">
-											{item.label}
-										</p>
-										{#if "subtitle" in item}
-											<p class="text-sm text-muted-foreground">
-												{item.subtitle}
-											</p>
-										{/if}
-									</div>
-									<ChevronRight size={20} class="text-muted-foreground" />
-								</button>
-							{/each}
+							{isSavingProfile ? "Saving..." : "Save Profile"}
+						</button>
+					</div>
+				</section>
+
+				<section
+					class="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm"
+					in:fly|global={{ y: 20, duration: 350, delay: 180 }}
+				>
+					<h3 class="text-lg font-semibold text-foreground">Theme Sync</h3>
+					<p class="mt-2 text-sm text-muted-foreground">
+						Choose a theme once and keep it with your account across devices.
+					</p>
+					<div class="mt-5 grid gap-3 sm:grid-cols-3">
+						{#each [
+							{ value: "light", label: "Light", icon: Sun },
+							{ value: "dark", label: "Dark", icon: Moon },
+							{ value: "auto", label: "Auto", icon: User },
+						] as option}
+							<button
+								type="button"
+								class={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
+									$currentUser?.settings.theme === option.value
+										? "border-primary bg-primary text-primary-foreground"
+										: "border-border bg-background text-foreground hover:bg-muted"
+								}`}
+								onclick={() => handleThemeChange(option.value as Theme)}
+							>
+								<option.icon size={16} />
+								{option.label}
+							</button>
+						{/each}
+					</div>
+				</section>
+
+				<section
+					class="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm"
+					in:fly|global={{ y: 20, duration: 350, delay: 260 }}
+				>
+					<h3 class="text-lg font-semibold text-foreground">Notifications & Privacy</h3>
+					<div class="mt-5 space-y-4">
+						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+							<div class="flex items-center gap-3">
+								<Bell size={18} />
+								<div>
+									<p class="font-medium text-foreground">Notifications Enabled</p>
+									<p class="text-sm text-muted-foreground">
+										Use this as the master switch for reminder delivery.
+									</p>
+								</div>
+							</div>
+							<input type="checkbox" bind:checked={settingsForm.notificationsEnabled} />
+						</div>
+
+						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+							<div>
+								<p class="font-medium text-foreground">Scan Reminders</p>
+								<p class="text-sm text-muted-foreground">
+									Remind me to revisit plants that need another scan.
+								</p>
+							</div>
+							<input type="checkbox" bind:checked={settingsForm.scanReminders} />
+						</div>
+
+						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+							<div>
+								<p class="font-medium text-foreground">Care Reminders</p>
+								<p class="text-sm text-muted-foreground">
+									Store my reminder preference for future care features.
+								</p>
+							</div>
+							<input type="checkbox" bind:checked={settingsForm.careReminders} />
+						</div>
+
+						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+							<div class="flex items-center gap-3">
+								<Shield size={18} />
+								<div>
+									<p class="font-medium text-foreground">Share Anonymous Data</p>
+									<p class="text-sm text-muted-foreground">
+										Allow aggregated usage data to help improve diagnosis quality.
+									</p>
+								</div>
+							</div>
+							<input type="checkbox" bind:checked={settingsForm.shareData} />
+						</div>
+
+						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+							<div>
+								<p class="font-medium text-foreground">Analytics</p>
+								<p class="text-sm text-muted-foreground">
+									Keep lightweight product analytics enabled for this account.
+								</p>
+							</div>
+							<input type="checkbox" bind:checked={settingsForm.analyticsEnabled} />
 						</div>
 					</div>
-				{/each}
 
-				<!-- Sign Out Button -->
-				<div class="pt-4">
-					<button
-						onclick={handleSignOut}
-						class="w-full px-6 py-4 rounded-3xl font-semibold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] bg-destructive text-white flex items-center justify-center gap-2"
-						in:fly|global={{ y: 20, duration: 400, delay: 700 }}
-					>
-						<LogOut size={20} />
-						Sign Out
-					</button>
-				</div>
+					<div class="mt-5">
+						<button
+							type="button"
+							class="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+							onclick={handleSettingsSave}
+							disabled={isSavingSettings}
+						>
+							{isSavingSettings ? "Saving..." : "Save Settings"}
+						</button>
+					</div>
+				</section>
 
-				<!-- App Version -->
-				<div class="text-center pb-4">
-					<p class="text-xs text-muted-foreground">GreenEye v1.0.0</p>
-				</div>
+				<section
+					class="rounded-3xl border border-border bg-card p-6 text-card-foreground shadow-sm"
+					in:fly|global={{ y: 20, duration: 350, delay: 340 }}
+				>
+					<h3 class="text-lg font-semibold text-foreground">Password</h3>
+					<p class="mt-2 text-sm text-muted-foreground">
+						Update your account password through your active Supabase session.
+					</p>
+					<div class="mt-5 grid gap-4 md:grid-cols-2">
+						<label class="space-y-2">
+							<span class="text-sm font-medium text-foreground">New Password</span>
+							<input
+								type="password"
+								class="w-full rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+								bind:value={passwordForm.nextPassword}
+								placeholder="At least 8 characters"
+							/>
+						</label>
+						<label class="space-y-2">
+							<span class="text-sm font-medium text-foreground">Confirm Password</span>
+							<input
+								type="password"
+								class="w-full rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
+								bind:value={passwordForm.confirmPassword}
+								placeholder="Repeat password"
+							/>
+						</label>
+					</div>
+					<div class="mt-5">
+						<button
+							type="button"
+							class="rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+							onclick={handlePasswordUpdate}
+							disabled={isUpdatingPassword}
+						>
+							{isUpdatingPassword ? "Updating..." : "Update Password"}
+						</button>
+					</div>
+				</section>
 			</div>
 		</div>
 	</main>
 </div>
-
-<style>
-	/* Smooth transitions */
-	/* Smooth transitions */
-	button {
-		transition: background-color 0.3s ease;
-	}
-</style>

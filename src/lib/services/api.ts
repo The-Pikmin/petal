@@ -1,10 +1,23 @@
 import { supabase } from "./supabase";
 import { PUBLIC_API_URL } from "$env/static/public";
+import type { ApiError } from "$lib/types/api.types";
 
 const API_URL = PUBLIC_API_URL || "https://stamen.onrender.com/api";
 
 interface FetchOptions extends RequestInit {
 	skipAuth?: boolean;
+}
+
+export class ApiRequestError extends Error {
+	status: number;
+	body: ApiError;
+
+	constructor(message: string, status: number, body: ApiError = {}) {
+		super(message);
+		this.name = "ApiRequestError";
+		this.status = status;
+		this.body = body;
+	}
 }
 
 export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
@@ -31,13 +44,12 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
 	});
 
 	if (!response.ok) {
-		const errorBody = await response.json().catch(() => ({}));
-		const error = new Error(
-			errorBody.error || errorBody.detail || `Request failed: ${response.status}`
+		const errorBody = (await response.json().catch(() => ({}))) as ApiError;
+		throw new ApiRequestError(
+			errorBody.error || errorBody.detail || `Request failed: ${response.status}`,
+			response.status,
+			errorBody
 		);
-		(error as any).status = response.status;
-		(error as any).body = errorBody;
-		throw error;
 	}
 
 	if (response.status === 204 || response.headers.get("content-length") === "0") {

@@ -1,69 +1,80 @@
 import { writable } from "svelte/store";
 import { browser } from "$app/environment";
+import { supabase } from "$lib/services/supabase";
+import { updateUserSettings } from "$lib/services/profile.service";
 
-export type Theme = "light" | "dark";
+export type Theme = "light" | "dark" | "auto";
+export type AppliedTheme = "light" | "dark";
 
-// Initialize theme from localStorage or default to light
-const getInitialTheme = (): Theme => {
+function resolveAppliedTheme(theme: Theme): AppliedTheme {
 	if (!browser) return "light";
+	if (theme === "auto") {
+		return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+	}
+	return theme;
+}
 
+function readStoredTheme(): Theme {
+	if (!browser) return "light";
 	const stored = localStorage.getItem("theme");
-	if (stored === "light" || stored === "dark") {
-		return stored;
-	}
+	return stored === "light" || stored === "dark" || stored === "auto" ? stored : "auto";
+}
 
-	// Check system preference
-	if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-		return "dark";
+function applyTheme(theme: Theme) {
+	if (!browser) return;
+	const appliedTheme = resolveAppliedTheme(theme);
+	localStorage.setItem("theme", theme);
+	document.documentElement.setAttribute("data-theme", appliedTheme);
+	if (appliedTheme === "dark") {
+		document.documentElement.classList.add("dark");
+	} else {
+		document.documentElement.classList.remove("dark");
 	}
+}
 
-	return "light";
-};
+async function persistRemoteTheme(theme: Theme) {
+	const {
+		data: { session },
+	} = await supabase.auth.getSession();
+	if (!session) return;
+	try {
+		await updateUserSettings({ theme });
+	} catch {
+		// Keep local theme changes even if remote sync fails.
+	}
+}
 
 function createThemeStore() {
-	const { subscribe, set } = writable<Theme>(getInitialTheme());
+	const initialPreference = readStoredTheme();
+	const { subscribe, set } = writable<AppliedTheme>(resolveAppliedTheme(initialPreference));
+	let currentPreference = initialPreference;
+
+	async function setTheme(theme: Theme, options: { syncRemote?: boolean } = {}) {
+		const { syncRemote = true } = options;
+		currentPreference = theme;
+		set(resolveAppliedTheme(theme));
+		applyTheme(theme);
+		if (syncRemote) {
+			await persistRemoteTheme(theme);
+		}
+	}
+
+	async function toggle() {
+		const nextTheme: Theme =
+			resolveAppliedTheme(currentPreference) === "light" ? "dark" : "light";
+		await setTheme(nextTheme);
+	}
 
 	return {
 		subscribe,
-		toggle: () => {
-			const newTheme = getInitialTheme() === "light" ? "dark" : "light";
-			set(newTheme);
-
-			if (browser) {
-				localStorage.setItem("theme", newTheme);
-				document.documentElement.setAttribute("data-theme", newTheme);
-				if (newTheme === "dark") {
-					document.documentElement.classList.add("dark");
-				} else {
-					document.documentElement.classList.remove("dark");
-				}
-			}
-		},
-		setTheme: (theme: Theme) => {
-			set(theme);
-
-			if (browser) {
-				localStorage.setItem("theme", theme);
-				document.documentElement.setAttribute("data-theme", theme);
-				if (theme === "dark") {
-					document.documentElement.classList.add("dark");
-				} else {
-					document.documentElement.classList.remove("dark");
-				}
-			}
-		},
+		toggle,
+		setTheme,
+		applyRemoteTheme: async (theme: Theme) => setTheme(theme, { syncRemote: false }),
 	};
 }
 
 export const theme = createThemeStore();
 
-// Initialize theme on load
 if (browser) {
-	const initialTheme = getInitialTheme();
-	document.documentElement.setAttribute("data-theme", initialTheme);
-	if (initialTheme === "dark") {
-		document.documentElement.classList.add("dark");
-	} else {
-		document.documentElement.classList.remove("dark");
-	}
+	applyTheme(readStoredTheme());
 }

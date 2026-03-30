@@ -170,7 +170,7 @@
 		<div class="container-responsive">
 			{#if loading}
 				<div class="space-y-4">
-					{#each Array(4) as _, i}
+					{#each Array(4) as _}
 						<div
 							class="rounded-3xl p-4 bg-card border border-border shadow-sm animate-pulse"
 						>

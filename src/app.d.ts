@@ -8,16 +8,16 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	interface ImportMetaEnv {
+		readonly PUBLIC_API_URL: string;
+		readonly PUBLIC_SUPABASE_URL: string;
+		readonly PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
+	}
+
+	interface ImportMeta {
+		readonly env: ImportMetaEnv;
+	}
 }
 
 export {};
-
-interface ImportMetaEnv {
-	readonly PUBLIC_API_URL: string;
-	readonly PUBLIC_SUPABASE_URL: string;
-	readonly PUBLIC_SUPABASE_PUBLISHABLE_KEY: string;
-}
-
-interface ImportMeta {
-	readonly env: ImportMetaEnv;
-}

@@ -5,13 +5,24 @@ import { Browser } from "@capacitor/browser";
 import type { Session } from "@supabase/supabase-js";
 import type { ApiUser } from "$lib/types/api.types";
 import { supabase } from "$lib/services/supabase";
-import { apiFetch } from "$lib/services/api";
+import { getCurrentUserProfile } from "$lib/services/profile.service";
+import { theme } from "$lib/stores/theme.store";
 
 interface AuthState {
 	user: ApiUser | null;
 	session: Session | null;
-	profile: { username: string; email: string } | null;
+	profile: ApiUser | null;
 	initialized: boolean;
+}
+
+class AuthProviderError extends Error {
+	status?: number;
+
+	constructor(message: string, status?: number) {
+		super(message);
+		this.name = "AuthProviderError";
+		this.status = status;
+	}
 }
 
 function createAuthStore() {
@@ -38,6 +49,21 @@ function createAuthStore() {
 			id: session.user.id,
 			username,
 			email,
+			display_name: username,
+			avatar_url: "",
+			joined_at: new Date().toISOString(),
+			settings: {
+				theme: "auto",
+				notifications: {
+					enabled: true,
+					scan_reminders: true,
+					care_reminders: true,
+				},
+				privacy: {
+					share_data: false,
+					analytics_enabled: true,
+				},
+			},
 		};
 	}
 
@@ -47,7 +73,7 @@ function createAuthStore() {
 			return;
 		}
 
-		const user = await fetchProfile(session);
+		const user = await fetchProfile();
 		if (!user || activeSessionToken !== session.access_token) {
 			return;
 		}
@@ -55,14 +81,15 @@ function createAuthStore() {
 		set({
 			user,
 			session,
-			profile: { username: user.username, email: user.email },
+			profile: user,
 			initialized: true,
 		});
+		await theme.applyRemoteTheme(user.settings.theme);
 	}
 
-	async function fetchProfile(session: Session): Promise<ApiUser | null> {
+	async function fetchProfile(): Promise<ApiUser | null> {
 		try {
-			return await apiFetch<ApiUser>("/me/");
+			return await getCurrentUserProfile();
 		} catch {
 			return null;
 		}
@@ -74,11 +101,11 @@ function createAuthStore() {
 			set({
 				user: fallbackUser,
 				session,
-				profile: { username: fallbackUser.username, email: fallbackUser.email },
+				profile: fallbackUser,
 				initialized: true,
 			});
 			activeSessionToken = session.access_token;
-			const user = await fetchProfile(session);
+			const user = await fetchProfile();
 			if (activeSessionToken !== session.access_token) {
 				return;
 			}
@@ -89,9 +116,10 @@ function createAuthStore() {
 			set({
 				user,
 				session,
-				profile: user ? { username: user.username, email: user.email } : null,
+				profile: user,
 				initialized: true,
 			});
+			await theme.applyRemoteTheme(user.settings.theme);
 		} else {
 			activeSessionToken = null;
 			set({ user: null, session: null, profile: null, initialized: true });
@@ -100,6 +128,21 @@ function createAuthStore() {
 
 	return {
 		subscribe,
+
+		async setProfile(user: ApiUser | null): Promise<void> {
+			const {
+				data: { session },
+			} = await supabase.auth.getSession();
+			set({
+				user,
+				session,
+				profile: user,
+				initialized: true,
+			});
+			if (user) {
+				await theme.applyRemoteTheme(user.settings.theme);
+			}
+		},
 
 		async refresh(): Promise<void> {
 			if (!browser) return;
@@ -131,9 +174,7 @@ function createAuthStore() {
 		async loginWithEmail(email: string, password: string): Promise<void> {
 			const { error } = await supabase.auth.signInWithPassword({ email, password });
 			if (error) {
-				const err = new Error(error.message);
-				(err as any).status = error.status;
-				throw err;
+				throw new AuthProviderError(error.message, error.status);
 			}
 			// onAuthStateChange will update the store
 		},
@@ -147,9 +188,7 @@ function createAuthStore() {
 				},
 			});
 			if (error) {
-				const err = new Error(error.message);
-				(err as any).status = error.status;
-				throw err;
+				throw new AuthProviderError(error.message, error.status);
 			}
 			// onAuthStateChange will update the store
 		},
