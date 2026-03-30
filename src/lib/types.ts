@@ -8,6 +8,22 @@ export interface CapturedPhoto {
 	format: string;
 	/** Timestamp when photo was captured */
 	timestamp: number;
+	/** Where the photo came from */
+	source?: "camera" | "gallery";
+	/** Whether the photo was captured manually or by auto-capture */
+	captureMode?: "manual" | "auto";
+	/** Client-side plant detection metadata */
+	plantDetection?: {
+		checked: boolean;
+		score?: number;
+		isPlantLike?: boolean;
+	};
+	/** Optional auto-capture diagnostics from the camera flow */
+	autoCaptureMetrics?: {
+		dwellDurationMs?: number;
+		stabilityScore?: number;
+		plantScore?: number;
+	};
 }
 
 /**
@@ -62,6 +78,10 @@ export interface ScanRecord {
 	scientificName?: string;
 	/** Image URL from backend storage */
 	imageUrl?: string;
+	/** Thumbnail URL from backend storage for list/grid views */
+	thumbnailUrl?: string;
+	/** When the backend signed image URL expires */
+	imageUrlExpiresAt?: string;
 	/** User notes */
 	notes?: string;
 	/** Whether this diagnosis has been flagged as incorrect */

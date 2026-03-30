@@ -4,6 +4,7 @@
 	import type { CapturedPhoto } from "$lib/types";
 	import type { PlantIDResult, StaticDiseaseResponse } from "$lib/types/api.types";
 	import { fetchDiseaseInfo, identifyPlant, saveScan } from "$lib/services/scan.service";
+	import { loadPlantDetector } from "$lib/services/plant-detector";
 	import { requireAuth } from "$lib/guards/auth.guard";
 	import {
 		CheckCircle,
@@ -26,8 +27,12 @@
 	let analysisError = $state<string | null>(null);
 	let isSaved = $state(false);
 	let isSaving = $state(false);
+	let isCheckingPlantDetection = $state(false);
 	const pageHeading = $derived(
 		isAnalyzing || result || analysisError ? "Scan Results" : "Review Photo"
+	);
+	const showsPlantDetectionWarning = $derived(
+		photo?.plantDetection?.checked === true && photo.plantDetection.isPlantLike === false
 	);
 
 	const top3 = $derived(result ? result.predictions.slice(0, 3) : []);
@@ -82,7 +87,9 @@
 
 		const photoData = sessionStorage.getItem("capturedPhoto");
 		if (photoData) {
-			photo = JSON.parse(photoData);
+			const parsedPhoto = JSON.parse(photoData) as CapturedPhoto;
+			photo = parsedPhoto;
+			void ensurePlantDetection(parsedPhoto);
 		} else {
 			goto("/camera");
 		}
@@ -122,6 +129,52 @@
 
 	function getImageSrc(photo: CapturedPhoto): string {
 		return `data:image/${photo.format};base64,${photo.base64}`;
+	}
+
+	async function ensurePlantDetection(initialPhoto: CapturedPhoto) {
+		if (initialPhoto.plantDetection?.checked) {
+			return;
+		}
+
+		isCheckingPlantDetection = true;
+
+		try {
+			const detector = await loadPlantDetector();
+			const image = await createImageElement(getImageSrc(initialPhoto));
+			const detection = await detector.classify(image);
+
+			if (!photo) return;
+
+			photo = {
+				...photo,
+				plantDetection: {
+					checked: detection.checked,
+					score: detection.score,
+					isPlantLike: detection.isPlantLike,
+				},
+			};
+			sessionStorage.setItem("capturedPhoto", JSON.stringify(photo));
+		} catch {
+			if (!photo) return;
+
+			photo = {
+				...photo,
+				plantDetection: {
+					checked: false,
+				},
+			};
+		} finally {
+			isCheckingPlantDetection = false;
+		}
+	}
+
+	function createImageElement(src: string): Promise<HTMLImageElement> {
+		return new Promise((resolve, reject) => {
+			const image = new Image();
+			image.onload = () => resolve(image);
+			image.onerror = () => reject(new Error("Unable to load captured image."));
+			image.src = src;
+		});
 	}
 
 	async function saveToHistory() {
@@ -208,6 +261,33 @@
 						Check that the plant or affected leaf is centered and easy to see, then
 						start analysis when you're ready.
 					</p>
+					{#if isCheckingPlantDetection}
+						<div
+							class="mt-4 rounded-2xl border border-border bg-secondary/60 px-4 py-3"
+						>
+							<p class="text-sm text-muted-foreground">
+								Checking whether this photo looks plant-like...
+							</p>
+						</div>
+					{:else if showsPlantDetectionWarning}
+						<div
+							class="mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 p-4"
+						>
+							<div class="flex items-start gap-3">
+								<AlertCircle
+									size={20}
+									class="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"
+								/>
+								<div>
+									<p class="font-semibold text-foreground">No plant detected</p>
+									<p class="mt-1 text-sm text-muted-foreground">
+										This photo does not appear to contain a clear plant or leaf.
+										Scanning may yield unexpected results.
+									</p>
+								</div>
+							</div>
+						</div>
+					{/if}
 					<div class="mt-5 space-y-3">
 						<button
 							onclick={analyzePlant}
