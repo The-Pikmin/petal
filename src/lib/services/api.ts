@@ -30,18 +30,48 @@ export async function apiFetch<T>(endpoint: string, options: FetchOptions = {}):
 	}
 
 	if (!skipAuth) {
-		const {
+		let {
 			data: { session },
 		} = await supabase.auth.getSession();
+
+		// Proactively refresh if token expires within 60s
+		if (session?.expires_at && session.expires_at * 1000 - Date.now() < 60_000) {
+			const { data } = await supabase.auth.refreshSession();
+			session = data.session;
+		}
+
 		if (session?.access_token) {
 			headers.set("Authorization", `Bearer ${session.access_token}`);
 		}
 	}
 
-	const response = await fetch(`${API_URL}${endpoint}`, {
-		...rest,
-		headers,
-	});
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 30_000);
+
+	let response: Response;
+	try {
+		response = await fetch(`${API_URL}${endpoint}`, {
+			...rest,
+			headers,
+			signal: controller.signal,
+		});
+	} catch (err) {
+		clearTimeout(timeoutId);
+		if (err instanceof DOMException && err.name === "AbortError") {
+			throw new ApiRequestError("Request timed out. Please try again.", 0);
+		}
+		throw new ApiRequestError("Network error. Check your connection and try again.", 0);
+	}
+	clearTimeout(timeoutId);
+
+	// Retry once on 401 after forcing a token refresh
+	if (response.status === 401 && !skipAuth) {
+		const { data } = await supabase.auth.refreshSession();
+		if (data.session?.access_token) {
+			headers.set("Authorization", `Bearer ${data.session.access_token}`);
+			response = await fetch(`${API_URL}${endpoint}`, { ...rest, headers });
+		}
+	}
 
 	if (!response.ok) {
 		const errorBody = (await response.json().catch(() => ({}))) as ApiError;
