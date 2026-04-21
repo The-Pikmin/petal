@@ -389,10 +389,10 @@
 									</p>
 									{#if getSecondaryPlantLabel(prediction.name, prediction.common_name)}
 										<p class="text-xs italic text-muted-foreground truncate">
-											{getSecondaryPlantLabel(
+											({getSecondaryPlantLabel(
 												prediction.name,
 												prediction.common_name
-											)}
+											)})
 										</p>
 									{/if}
 								</div>
