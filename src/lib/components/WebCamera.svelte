@@ -327,10 +327,7 @@
 				lockBreakStartedAt = null;
 
 				const elapsed = getCurrentLockDuration(now);
-				autoCaptureProgress = Math.min(
-					elapsed / PLANT_DETECTION_CONFIG.dwellDurationMs,
-					1
-				);
+				autoCaptureProgress = Math.min(elapsed / PLANT_DETECTION_CONFIG.dwellDurationMs, 1);
 
 				if (elapsed >= PLANT_DETECTION_CONFIG.dwellDurationMs) {
 					detectionState = "auto_capturing";

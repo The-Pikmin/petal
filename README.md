@@ -41,20 +41,20 @@ Petal is the GreenEye frontend. Built with SvelteKit 2 and Svelte 5, it provides
 
 # Pages / Routes
 
-| Route                        | Description                                                  |
-| ---------------------------- | ------------------------------------------------------------ |
-| `/`                          | Landing page (marketing, redirects to home on native)        |
-| `/login`                     | Email/password + social login                                |
-| `/signup`                    | Account registration                                         |
-| `/onboarding`                | First-time user onboarding flow                              |
-| `/home`                      | Dashboard with weather, stats, recent scans, daily tip       |
-| `/camera`                    | Detection-guided camera capture / image upload               |
+| Route                        | Description                                                   |
+| ---------------------------- | ------------------------------------------------------------- |
+| `/`                          | Landing page (marketing, redirects to home on native)         |
+| `/login`                     | Email/password + social login                                 |
+| `/signup`                    | Account registration                                          |
+| `/onboarding`                | First-time user onboarding flow                               |
+| `/home`                      | Dashboard with weather, stats, recent scans, daily tip        |
+| `/camera`                    | Detection-guided camera capture / image upload                |
 | `/scan`                      | Review and confirm a photo before analysis, then view results |
-| `/history`                   | Scan history timeline                                        |
-| `/history/[id]`              | Single scan detail with treatment info                       |
-| `/library`                   | Disease library (filterable by genus, searchable)            |
-| `/library/[genus]/[disease]` | Disease detail with symptoms, causes, treatments, prevention |
-| `/profile`                   | User profile, password, privacy, notifications, and theme    |
+| `/history`                   | Scan history timeline                                         |
+| `/history/[id]`              | Single scan detail with treatment info                        |
+| `/library`                   | Disease library (filterable by genus, searchable)             |
+| `/library/[genus]/[disease]` | Disease detail with symptoms, causes, treatments, prevention  |
+| `/profile`                   | User profile, password, privacy, notifications, and theme     |
 
 # Getting Started
 
@@ -86,15 +86,15 @@ Open http://localhost:5173 in your browser.
 
 # Scripts
 
-| Command | Description |
-| ------- | ----------- |
-| `pnpm dev` | Start dev server |
-| `pnpm build` | Production build, checks, formatting, and Capacitor sync |
-| `pnpm preview` | Preview production build |
-| `pnpm check` | Run svelte-check |
-| `pnpm lint` | Run ESLint |
-| `pnpm format` | Run Prettier |
-| `pnpm cap:sync` | Sync web assets into native iOS/Android projects |
+| Command         | Description                                              |
+| --------------- | -------------------------------------------------------- |
+| `pnpm dev`      | Start dev server                                         |
+| `pnpm build`    | Production build, checks, formatting, and Capacitor sync |
+| `pnpm preview`  | Preview production build                                 |
+| `pnpm check`    | Run svelte-check                                         |
+| `pnpm lint`     | Run ESLint                                               |
+| `pnpm format`   | Run Prettier                                             |
+| `pnpm cap:sync` | Sync web assets into native iOS/Android projects         |
 
 ## Current Camera Flow
 
