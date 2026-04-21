@@ -155,7 +155,7 @@
 							genus
 								? 'bg-primary text-primary-foreground'
 								: 'bg-card text-card-foreground border border-border hover:bg-muted'}"
-							in:fly={{ x: 20, duration: 400, delay: 200 + i * 50 }}
+							in:fly={{ x: 20, duration: 300, delay: Math.min(i * 30, 300) }}
 						>
 							{genus}
 						</button>
@@ -208,7 +208,7 @@
 										`/library/${encodeURIComponent(disease.genus)}/${encodeURIComponent(disease.disease_name)}`
 									)}
 								class="rounded-3xl p-4 text-left hover:scale-[1.02] active:scale-[0.98] bg-card text-card-foreground shadow-sm border border-border h-full"
-								in:fly|global={{ y: 20, duration: 400, delay: 200 + i * 50 }}
+								in:fly|global={{ y: 20, duration: 300, delay: Math.min(i * 30, 400) }}
 							>
 								<div class="flex gap-4 h-full">
 									<!-- Disease Icon -->
