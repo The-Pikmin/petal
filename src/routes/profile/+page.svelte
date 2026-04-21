@@ -2,18 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
 	import { fade, fly } from "svelte/transition";
-	import {
-		Bell,
-		Camera,
-		LogOut,
-		Mail,
-		Moon,
-		Shield,
-		Sun,
-		Upload,
-		User,
-		X,
-	} from "lucide-svelte";
+	import { Bell, Camera, LogOut, Mail, Moon, Shield, Sun, Upload, User, X } from "lucide-svelte";
 
 	import HamburgerMenu from "$lib/components/HamburgerMenu.svelte";
 	import { requireAuth } from "$lib/guards/auth.guard";
@@ -112,7 +101,10 @@
 			await auth.setProfile(updatedUser);
 			setStatus("Profile updated.");
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : "Failed to update profile.", "error");
+			setStatus(
+				error instanceof Error ? error.message : "Failed to update profile.",
+				"error"
+			);
 		} finally {
 			isSavingProfile = false;
 		}
@@ -189,7 +181,10 @@
 			});
 			setStatus("Settings updated.");
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : "Failed to update settings.", "error");
+			setStatus(
+				error instanceof Error ? error.message : "Failed to update settings.",
+				"error"
+			);
 		} finally {
 			isSavingSettings = false;
 		}
@@ -215,7 +210,10 @@
 			passwordForm = { nextPassword: "", confirmPassword: "" };
 			setStatus("Password updated.");
 		} catch (error) {
-			setStatus(error instanceof Error ? error.message : "Failed to update password.", "error");
+			setStatus(
+				error instanceof Error ? error.message : "Failed to update password.",
+				"error"
+			);
 		} finally {
 			isUpdatingPassword = false;
 		}
@@ -280,7 +278,9 @@
 							</h2>
 							<p class="text-sm text-muted-foreground">{$currentUser?.email ?? ""}</p>
 							{#if $currentUser?.joined_at}
-								<p class="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+								<p
+									class="mt-1 text-xs uppercase tracking-[0.18em] text-muted-foreground"
+								>
 									Member since {formatJoinDate($currentUser.joined_at)}
 								</p>
 							{/if}
@@ -395,11 +395,7 @@
 						Choose a theme once and keep it with your account across devices.
 					</p>
 					<div class="mt-5 grid gap-3 sm:grid-cols-3">
-						{#each [
-							{ value: "light", label: "Light", icon: Sun },
-							{ value: "dark", label: "Dark", icon: Moon },
-							{ value: "auto", label: "Auto", icon: User },
-						] as option}
+						{#each [{ value: "light", label: "Light", icon: Sun }, { value: "dark", label: "Dark", icon: Moon }, { value: "auto", label: "Auto", icon: User }] as option}
 							<button
 								type="button"
 								class={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition-colors ${
@@ -422,7 +418,9 @@
 				>
 					<h3 class="text-lg font-semibold text-foreground">Notifications & Privacy</h3>
 					<div class="mt-5 space-y-4">
-						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+						<div
+							class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4"
+						>
 							<div class="flex items-center gap-3">
 								<Bell size={18} />
 								<div>
@@ -432,10 +430,15 @@
 									</p>
 								</div>
 							</div>
-							<input type="checkbox" bind:checked={settingsForm.notificationsEnabled} />
+							<input
+								type="checkbox"
+								bind:checked={settingsForm.notificationsEnabled}
+							/>
 						</div>
 
-						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+						<div
+							class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4"
+						>
 							<div>
 								<p class="font-medium text-foreground">Scan Reminders</p>
 								<p class="text-sm text-muted-foreground">
@@ -445,7 +448,9 @@
 							<input type="checkbox" bind:checked={settingsForm.scanReminders} />
 						</div>
 
-						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+						<div
+							class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4"
+						>
 							<div>
 								<p class="font-medium text-foreground">Care Reminders</p>
 								<p class="text-sm text-muted-foreground">
@@ -455,20 +460,25 @@
 							<input type="checkbox" bind:checked={settingsForm.careReminders} />
 						</div>
 
-						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+						<div
+							class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4"
+						>
 							<div class="flex items-center gap-3">
 								<Shield size={18} />
 								<div>
 									<p class="font-medium text-foreground">Share Anonymous Data</p>
 									<p class="text-sm text-muted-foreground">
-										Allow aggregated usage data to help improve diagnosis quality.
+										Allow aggregated usage data to help improve diagnosis
+										quality.
 									</p>
 								</div>
 							</div>
 							<input type="checkbox" bind:checked={settingsForm.shareData} />
 						</div>
 
-						<div class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4">
+						<div
+							class="flex items-center justify-between gap-4 rounded-2xl bg-muted/50 p-4"
+						>
 							<div>
 								<p class="font-medium text-foreground">Analytics</p>
 								<p class="text-sm text-muted-foreground">
@@ -510,7 +520,8 @@
 							/>
 						</label>
 						<label class="space-y-2">
-							<span class="text-sm font-medium text-foreground">Confirm Password</span>
+							<span class="text-sm font-medium text-foreground">Confirm Password</span
+							>
 							<input
 								type="password"
 								class="w-full rounded-2xl border border-border bg-background px-4 py-3 text-foreground outline-none transition-colors focus:border-primary"
