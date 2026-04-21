@@ -18,6 +18,7 @@
 	let { children } = $props();
 	let showSplash = $state(false);
 	let appUrlOpenListener: PluginListenerHandle | null = null;
+	let appStateListener: PluginListenerHandle | null = null;
 
 	// Only show splash on first load in Capacitor mobile app
 	if (browser && Capacitor.isNativePlatform()) {
@@ -31,6 +32,12 @@
 	onMount(() => {
 		const setup = async () => {
 			if (browser && Capacitor.isNativePlatform() && !appUrlOpenListener) {
+				appStateListener = await App.addListener("appStateChange", async ({ isActive }) => {
+					if (isActive) {
+						await auth.refresh();
+					}
+				});
+
 				appUrlOpenListener = await App.addListener("appUrlOpen", async ({ url }) => {
 					if (!url.startsWith("com.greeneye.app://login-callback")) {
 						return;
@@ -93,6 +100,8 @@
 		return () => {
 			appUrlOpenListener?.remove();
 			appUrlOpenListener = null;
+			appStateListener?.remove();
+			appStateListener = null;
 		};
 	});
 
